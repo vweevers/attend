@@ -1,0 +1,16 @@
+{
+  "name": "attend-hallmark",
+  "version": "0.0.0",
+  "description": "Attend plugin to lint and fix markdown with hallmark",
+  "private": true,
+  "dependencies": {
+    "hallmark": "^3.1.0",
+    "json-source-map": "0.6.1",
+    "resolve": "^1.19.0",
+    "vfile": "^4.2.0",
+    "vfile-reporter-json": "^2.0.1"
+  },
+  "engines": {
+    "node": ">=10"
+  }
+}

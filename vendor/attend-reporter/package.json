@@ -1,0 +1,13 @@
+{
+  "name": "attend-reporter",
+  "version": "0.0.0",
+  "description": "Default reporter for Attend",
+  "private": true,
+  "dependencies": {
+    "chalk": "^4.1.0",
+    "vfile-reporter-pretty": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=10"
+  }
+}

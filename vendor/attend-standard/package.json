@@ -1,0 +1,14 @@
+{
+  "name": "attend-standard",
+  "version": "0.0.0",
+  "description": "Attend plugin to lint and fix javascript with standard",
+  "private": true,
+  "dependencies": {
+    "standard": "^16.0.2",
+    "resolve": "^1.19.0",
+    "vfile": "^4.2.0"
+  },
+  "engines": {
+    "node": ">=10"
+  }
+}

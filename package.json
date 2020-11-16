@@ -1,0 +1,37 @@
+{
+  "name": "attend",
+  "version": "0.0.0",
+  "description": "Automate maintenance tasks across many repositories",
+  "author": "Vincent Weevers",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "test": "standard"
+  },
+  "dependencies": {
+    "attend-hallmark": "file:vendor/attend-hallmark",
+    "attend-npm-dependencies": "file:vendor/attend-npm-dependencies",
+    "attend-npm-test": "file:vendor/attend-npm-test",
+    "attend-project-clone": "file:vendor/attend-project-clone",
+    "attend-reporter": "file:vendor/attend-reporter",
+    "attend-standard": "file:vendor/attend-standard",
+    "vfile": "^4.2.0"
+  },
+  "devDependencies": {
+    "standard": "^16.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vweevers/attend.git"
+  },
+  "homepage": "https://github.com/vweevers/attend",
+  "keywords": [
+    "attend",
+    "maintenance",
+    "lint",
+    "fix"
+  ],
+  "engines": {
+    "node": ">=10"
+  }
+}

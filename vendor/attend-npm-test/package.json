@@ -1,0 +1,12 @@
+{
+  "name": "attend-npm-test",
+  "version": "0.0.0",
+  "description": "Attend plugin to run npm test",
+  "private": true,
+  "dependencies": {
+    "vfile": "^4.2.0"
+  },
+  "engines": {
+    "node": ">=10"
+  }
+}
