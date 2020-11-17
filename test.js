@@ -21,8 +21,6 @@ async function main () {
   // TODO
   // await suite.commit('Fix markdown')
   // await suite.pr('Maintenance')
-
-  console.log('done')
 }
 
 main()

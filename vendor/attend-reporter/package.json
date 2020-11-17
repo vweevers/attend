@@ -4,7 +4,9 @@
   "description": "Default reporter for Attend",
   "private": true,
   "dependencies": {
+    "bytes": "^3.1.0",
     "chalk": "^4.1.0",
+    "ansi-diff": "^1.1.1",
     "vfile-reporter-pretty": "^5.0.0"
   },
   "engines": {

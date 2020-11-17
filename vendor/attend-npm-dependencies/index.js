@@ -213,19 +213,15 @@ function npm (cwd, args, env, ee) {
     const stdio = ['ignore', 'pipe', 'pipe']
     const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm'
     const opts = { cwd, stdio, env }
-    const cp = spawn(npm, [...args, '--no-audit', '--no-progress'], opts)
-    const description = ['npm'].concat(args).join(' ')
+    const subprocess = spawn(npm, [...args, '--no-audit', '--no-progress'], opts)
 
-    if (!ee.emit('stdout', { description, stream: cp.stdout })) {
-      cp.stdout.pipe(process.stdout, { end: false })
+    if (!ee.emit('subprocess', subprocess)) {
+      subprocess.stdout.pipe(process.stderr, { end: false })
+      subprocess.stderr.pipe(process.stderr, { end: false })
     }
 
-    if (!ee.emit('stderr', { description, stream: cp.stderr })) {
-      cp.stderr.pipe(process.stderr, { end: false })
-    }
-
-    cp.on('error', reject)
-    cp.on('close', function (code) {
+    subprocess.on('error', reject)
+    subprocess.on('close', function (code) {
       if (code !== 0) return reject(new Error(`npm exited with code ${code}`))
       resolve()
     })

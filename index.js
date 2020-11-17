@@ -52,6 +52,7 @@ class Suite extends EventEmitter {
 
     for (const project of this[kProjects]) {
       if (typeof project.open === 'function') {
+        this.emit('step', { project, name: 'open' })
         await project.open()
       }
     }
@@ -114,6 +115,8 @@ class Suite extends EventEmitter {
       if (!this[kOpened]) await this.open()
 
       for (const project of this[kProjects]) {
+        this.emit('step', { project, name })
+
         try {
           await fn(project, ...args)
         } catch (err) {
@@ -146,6 +149,8 @@ class Suite extends EventEmitter {
         for (const project of this[kProjects]) {
           let projectFailed = false
 
+          this.emit('step', { project, name })
+
           // For compatibility
           process.chdir(project.cwd)
 
@@ -154,17 +159,19 @@ class Suite extends EventEmitter {
               continue
             }
 
-            const onout = ({ stream, description }) => {
-              this.emit('stdout', { stream, description, project })
-            }
+            const subs = Subs()
+            const onsub = (subprocess) => {
+              subs.add(subprocess)
 
-            const onerr = ({ stream, description }) => {
-              this.emit('stderr', { stream, description, project })
+              // If reporter does not consume the streams, we should
+              if (!this.emit('subprocess', { subprocess, project })) {
+                if (subprocess.stdout) subprocess.stdout.pipe(process.stderr, { end: false })
+                if (subprocess.stderr) subprocess.stderr.pipe(process.stderr, { end: false })
+              }
             }
 
             if (typeof plugin.on === 'function') {
-              plugin.on('stdout', onout)
-              plugin.on('stderr', onerr)
+              plugin.on('subprocess', onsub)
             }
 
             let result
@@ -178,9 +185,10 @@ class Suite extends EventEmitter {
             }
 
             if (typeof plugin.removeListener === 'function') {
-              plugin.removeListener('stdout', onout)
-              plugin.removeListener('stderr', onerr)
+              plugin.removeListener('subprocess', onsub)
             }
+
+            await subs.closed()
 
             if (!result) {
               // NOTE: temporary for non-compliant plugins
@@ -214,6 +222,32 @@ class Suite extends EventEmitter {
 
 module.exports = function attend () {
   return new Suite()
+}
+
+function Subs () {
+  let pending = 0
+
+  return { add, closed }
+
+  function add (subprocess) {
+    if (subprocess.exitCode === null) {
+      pending++
+      subprocess.once('close', next)
+    }
+  }
+
+  function next () {
+    if (--pending === 0 && closed.resolve) {
+      closed.resolve()
+    }
+  }
+
+  async function closed () {
+    if (pending === 0) return
+    return new Promise(function (resolve) {
+      closed.resolve = resolve
+    })
+  }
 }
 
 function errorResult (err, project, origin) {

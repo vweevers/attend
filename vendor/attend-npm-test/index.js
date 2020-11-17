@@ -49,18 +49,14 @@ function npmt (cwd, ee) {
   return new Promise(function (resolve, reject) {
     const stdio = ['ignore', 'pipe', 'pipe']
     const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm'
-    const cp = spawn(npm, ['t'], { cwd, stdio })
-    const description = 'npm t'
+    const subprocess = spawn(npm, ['run', '-s', 'test'], { cwd, stdio })
 
-    if (!ee.emit('stdout', { description, stream: cp.stdout })) {
-      cp.stdout.pipe(process.stdout, { end: false })
+    if (!ee.emit('subprocess', subprocess)) {
+      subprocess.stdout.pipe(process.stderr, { end: false })
+      subprocess.stderr.pipe(process.stderr, { end: false })
     }
 
-    if (!ee.emit('stderr', { description, stream: cp.stderr })) {
-      cp.stderr.pipe(process.stderr, { end: false })
-    }
-
-    cp.on('error', reject)
-    cp.on('close', resolve)
+    subprocess.on('error', reject)
+    subprocess.on('close', resolve)
   })
 }
