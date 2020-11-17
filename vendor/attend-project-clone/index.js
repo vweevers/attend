@@ -5,8 +5,12 @@ const promisify = require('util').promisify
 const execFile = promisify(require('child_process').execFile)
 const gitPullOrClone = promisify(require('git-pull-or-clone'))
 
-exports.project = function (slug) {
-  return new ProjectClone(slug)
+module.exports = function (slug) {
+  return {
+    async projects () {
+      return [new ProjectClone(slug)]
+    }
+  }
 }
 
 class ProjectClone {

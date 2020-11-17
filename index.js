@@ -2,70 +2,26 @@
 
 const vfile = require('vfile')
 const reporter = require('attend-reporter')
-const { once, EventEmitter } = require('events')
+const EventEmitter = require('events')
 const path = require('path')
 const builtins = require('./builtins')
 
-const kOriginal = Symbol('kOriginal')
-const kProjects = Symbol('kProjects')
 const kPlugins = Symbol('kPlugins')
-const kOpen = Symbol('kOpen')
-const kOpened = Symbol('kOpened')
-const kFrozen = Symbol('kFrozen')
+const kRun = Symbol('kRun')
+const kStep = Symbol('kStep')
 
 class Suite extends EventEmitter {
   constructor () {
     super()
-
-    this[kOriginal] = process.cwd()
-    this[kProjects] = []
     this[kPlugins] = []
-    this[kOpened] = false
-    this[kFrozen] = false
-
-    Object.defineProperty(this, 'isAttend', {
-      value: true,
-      enumerable: false
-    })
-
-    builtins.extend(this)
     reporter.report(this)
-  }
-
-  get projects () {
-    return this[kProjects]
   }
 
   get plugins () {
     return this[kPlugins]
   }
 
-  async open () {
-    if (this[kOpened]) return
-    if (this[kFrozen]) return once(this, kOpen)
-
-    this[kFrozen] = true
-
-    if (this[kProjects].length === 0) {
-      this[kProjects].push(new LocalProject('.'))
-    }
-
-    for (const project of this[kProjects]) {
-      if (typeof project.open === 'function') {
-        this.emit('step', { project, name: 'open' })
-        await project.open()
-      }
-    }
-
-    this[kOpened] = true
-    this.emit(kOpen)
-  }
-
   use (plugin, options) {
-    if (this[kFrozen]) {
-      throw new Error('Cannot add plugins once frozen')
-    }
-
     if (Array.isArray(plugin)) {
       for (const el of plugin) {
         if (Array.isArray(el)) {
@@ -79,144 +35,125 @@ class Suite extends EventEmitter {
         plugin = plugin(options)
       }
 
-      // TODO: instead make it recursive (where a suite is a plugin)
-      if (plugin.isAttend) {
-        this[kProjects].push(...plugin.projects.map(validateProject))
-        this.use(plugin.plugins)
+      if (plugin.plugins) {
+        this[kPlugins].push(...plugin.plugins)
       } else {
         this[kPlugins].push(plugin)
-
-        if (typeof plugin.extend === 'function') {
-          plugin.extend(this)
-        }
-
-        if (typeof plugin.project === 'function') {
-          const project = plugin.project(options)
-          this[kProjects].push(validateProject(project))
-        }
       }
     }
 
     return this
   }
 
-  defineHelper (name, fn, options) {
-    if (this[kFrozen]) {
-      throw new Error('Cannot define helper once frozen')
-    }
+  async [kRun] (steps) {
+    const original = process.cwd()
+    const projects = []
 
-    options = options || {}
+    let ok = true
+    let defaultProject = true
 
-    if (this[name] !== undefined && !options.override) {
-      throw new Error(`Helper "${name}" is already defined`)
-    }
-
-    this[name] = async (...args) => {
-      if (!this[kOpened]) await this.open()
-
-      for (const project of this[kProjects]) {
-        this.emit('step', { project, name })
-
-        try {
-          await fn(project, ...args)
-        } catch (err) {
-          this.emit('result', errorResult(err, project, `attend:${name}`))
-          process.exit(1)
-        }
+    for (const plugin of this[kPlugins]) {
+      if (typeof plugin.projects === 'function') {
+        defaultProject = false
+        projects.push(...(await plugin.projects()).map(validateProject))
       }
     }
 
-    return this
-  }
-
-  defineTask (name, options) {
-    if (this[kFrozen]) {
-      throw new Error('Cannot define task once frozen')
+    if (defaultProject) {
+      projects.push(new LocalProject('.'))
     }
 
-    options = options || {}
+    for (const project of projects) {
+      try {
+        await this[kStep](project, 'open', openProject)
 
-    if (this[name] !== undefined && !options.override) {
-      throw new Error(`Task "${name}" is already defined`)
-    }
-
-    this[name] = async (preset = this) => {
-      if (!this[kOpened]) await this.open()
-
-      let taskFailed = false
+        // For compatibility
+        process.chdir(project.cwd)
+      } catch (err) {
+        this.emit('result', errorResult(err, project, 'attend:open'))
+        ok = false
+        continue
+      }
 
       try {
-        for (const project of this[kProjects]) {
-          let projectFailed = false
+        for (const { name, work, plugin } of steps) {
+          try {
+            const result = await this[kStep](project, name, work, plugin)
 
-          this.emit('step', { project, name })
-
-          // For compatibility
-          process.chdir(project.cwd)
-
-          for (const plugin of preset.plugins) {
-            if (typeof plugin[name] !== 'function') {
-              continue
-            }
-
-            const subs = Subs()
-            const onsub = (subprocess) => {
-              subs.add(subprocess)
-
-              // If reporter does not consume the streams, we should
-              if (!this.emit('subprocess', { subprocess, project })) {
-                if (subprocess.stdout) subprocess.stdout.pipe(process.stderr, { end: false })
-                if (subprocess.stderr) subprocess.stderr.pipe(process.stderr, { end: false })
-              }
-            }
-
-            if (typeof plugin.on === 'function') {
-              plugin.on('subprocess', onsub)
-            }
-
-            let result
-
-            try {
-              // TODO: handle input (only for init?)
-              result = await plugin[name]({ cwd: project.cwd })
-            } catch (err) {
-              this.emit('result', errorResult(err, project, `attend:${name}`))
-              process.exit(1)
-            }
-
-            if (typeof plugin.removeListener === 'function') {
-              plugin.removeListener('subprocess', onsub)
-            }
-
-            await subs.closed()
-
-            if (!result) {
-              // NOTE: temporary for non-compliant plugins
-              result = { files: [] }
-            }
-
-            this.emit('result', { ...result, project })
-
-            for (const file of result.files) {
-              // Stop suite on errors
-              if (file.messages.find(isFatal)) process.exit(1)
+            if (result) {
+              this.emit('result', { ...result, project })
 
               // Stop project on warnings
-              if (file.messages.find(isWarningOrFatal)) {
-                projectFailed = taskFailed = true
+              if (result.files.find(hasWarningOrFatal)) {
+                ok = false
                 break
               }
             }
-
-            if (projectFailed) break
+          } catch (err) {
+            this.emit('result', errorResult(err, project, `attend:${name}`))
+            ok = false
+            break
           }
         }
       } finally {
-        process.chdir(this[kOriginal])
+        process.chdir(original)
       }
-
-      if (taskFailed) process.exit(1)
     }
+
+    if (!ok) process.exit(1)
+  }
+
+  async [kStep] (project, step, work, plugin) {
+    this.emit('step', { project, name: step })
+
+    const subs = Subs()
+    const ee = plugin ? typeof plugin.on === 'function' : false
+    const onsub = (subprocess) => {
+      subs.add(subprocess)
+
+      // If reporter does not consume the streams, we should.
+      // TODO: don't emit on suite, but on ...?
+      if (!this.emit('subprocess', { project, step, subprocess })) {
+        if (subprocess.stdout) subprocess.stdout.pipe(process.stderr, { end: false })
+        if (subprocess.stderr) subprocess.stderr.pipe(process.stderr, { end: false })
+      }
+    }
+
+    try {
+      if (ee) plugin.on('subprocess', onsub)
+      return await work.call(plugin, project)
+    } finally {
+      if (ee) plugin.removeListener('subprocess', onsub)
+      await subs.closed()
+    }
+  }
+}
+
+// TODO: handle input (only for init?)
+for (const k of ['init', 'lint', 'fix']) {
+  Suite.prototype[k] = async function (options) {
+    if (!options) options = {}
+
+    const steps = []
+
+    if (options.branch) {
+      const work = async (project) => builtins.branch(project, options.branch)
+      steps.push({ name: 'branch', work })
+    }
+
+    for (const prefix of ['pre', '', 'post']) {
+      const name = prefix + k
+
+      for (const plugin of this[kPlugins]) {
+        const work = plugin[name]
+
+        if (typeof work === 'function') {
+          steps.push({ name, work, plugin })
+        }
+      }
+    }
+
+    return this[kRun](steps)
   }
 }
 
@@ -259,13 +196,19 @@ function errorResult (err, project, origin) {
   return { files: [file], project }
 }
 
+async function openProject (project) {
+  if (typeof project.open === 'function') {
+    await project.open()
+  }
+}
+
+function hasWarningOrFatal (file) {
+  return file.messages.find(isWarningOrFatal)
+}
+
 function isWarningOrFatal (msg) {
   // If .fatal is null, it's an info message
   return msg.fatal === false || msg.fatal === true
-}
-
-function isFatal (msg) {
-  return msg.fatal === true
 }
 
 function validateProject (project) {

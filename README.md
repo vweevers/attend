@@ -16,7 +16,6 @@
   - `fix()`: fix issues
 - Output is [vfile](https://github.com/vfile/vfile)-based, where every message has an associated source code position
   - For example, `attend-npm-dependencies` will show the line number of an outdated dependency in `package.json`
-- Has helpers for common git(hub) operations
 
 ## Example
 
@@ -34,13 +33,10 @@ const suite = attend()
  .use(require('attend-npm-test'))
 
 async function main () {
-  await suite.branch('attend/hallmark-3.1.0')
-  await suite.init()
-  await suite.fix() // Or lint
-
-  // TODO
-  // await suite.commit('Fix markdown')
-  // await suite.pr('Maintenance')
+  await suite.fix({
+    branch: 'attend/hallmark-3.1.0',
+    commit: 'Fix markdown' // TODO
+  })
 }
 
 main()
@@ -79,7 +75,6 @@ main()
   - [ ] `pr(title)`
   - [ ] `rebase()`
   - [ ] `execFile()` and `exec()`
-  - [x] `fn(fn)`
 - plugins:
   - js:
     - [x] `attend-npm-dependencies` (wrap `npm-check`)
@@ -134,27 +129,6 @@ const suite = attend()
   .use(require('attend-project-clone'), 'Level/abstract-leveldown')
   .use(require('attend-project-clone'), 'Level/compose')
   .use(preset)
-
-async function main () {
-  await suite.branch('attend/bump-dependencies')
-  await suite.init()
-  await suite.fix()
-
-  // TODO
-  // await suite.commit('Bump dependencies')
-  // await suite.pr('Bump dependencies')
-}
-
-main()
-```
-
-You can also pass a preset to `init()`, `fix()` or `lint()` in order to break up changes into multiple commits:
-
-```js
-await suite.fix(preset)
-await suite.commit('Bump dependencies') // Not implemented yet
-await suite.fix(otherPreset)
-await suite.commit('Fix other thing')
 ```
 
 ## Suitable for

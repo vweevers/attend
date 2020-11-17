@@ -14,23 +14,33 @@ exports.report = function (suite) {
   const buffer = []
 
   let lastLine = ''
-  let lastStep = ''
   let lastWrite = 0
+  let timer = null
 
   function status (line, force) {
     if (verbose) {
       if (line && lastLine !== line) {
-        lastLine = line
         console.log(line)
       }
     } else {
       const now = Date.now()
 
       if (force || now - lastWrite > 150) {
+        clearTimeout(timer)
+        timer = null
         process.stdout.write(diff.update(line ? `${line}\n` : ''))
         lastWrite = now
+      } else if (timer === null) {
+        timer = setTimeout(refresh, 250)
+        timer.unref()
       }
     }
+
+    lastLine = line
+  }
+
+  function refresh () {
+    status(lastLine)
   }
 
   process.stdout.on('resize', function () {
@@ -43,14 +53,13 @@ exports.report = function (suite) {
   })
 
   suite.on('step', function ({ project, name }) {
-    lastStep = name
     status(header(project, name))
   })
 
-  suite.on('subprocess', function ({ project, subprocess }) {
+  suite.on('subprocess', function ({ project, step, subprocess }) {
     const description = describeSubprocess(subprocess)
     const streams = [subprocess.stdout, subprocess.stderr].filter(Boolean)
-    const h = header(project, lastStep, description) + '\n'
+    const h = header(project, step, description) + '\n'
 
     let length = 0
 
@@ -62,7 +71,7 @@ exports.report = function (suite) {
         stream.pipe(process.stderr, { end: false })
       }
     } else {
-      status(header(project, lastStep, description))
+      status(header(project, step, description))
 
       // Save output in buffer, only show on failure
       for (const stream of streams) {
@@ -70,7 +79,7 @@ exports.report = function (suite) {
           if (length === 0) buffer.push(Buffer.from(h))
           length += chunk.length
           buffer.push(chunk)
-          status(header(project, lastStep, description, 'buffer: ' + bytes.format(length)))
+          status(header(project, step, description, 'buffer: ' + bytes.format(length)))
         })
       }
     }

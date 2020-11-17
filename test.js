@@ -14,13 +14,15 @@ const suite = attend()
   .use(require('attend-npm-test'))
 
 async function main () {
-  await suite.branch('attend/hallmark-3.1.0')
-  await suite.init()
-  await suite.fix()
+  // TODO: can't lint without deps, but init does too much
+  // await suite.init()
+  // await suite.lint()
 
-  // TODO
-  // await suite.commit('Fix markdown')
-  // await suite.pr('Maintenance')
+  await suite.fix({
+    branch: 'attend/hallmark-3.1.0',
+    commit: 'Fix markdown', // TODO
+    pr: 'Fix markdown' // TODO
+  })
 }
 
 main()
