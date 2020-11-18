@@ -1,5 +1,7 @@
 'use strict'
 
+patchWindowsTerminal()
+
 const style = require('chalk').bgWhite.black
 const bytes = require('bytes')
 const reporter = require('vfile-reporter-pretty')
@@ -157,4 +159,26 @@ function packageName (cwd) {
 
     return JSON.parse(json).name
   } catch {}
+}
+
+// Enable unicode in Windows Terminal as well as ConEmu
+function patchWindowsTerminal () {
+  try {
+    if (process.platform !== 'win32') return
+    if (!process.env.WT_SESSION && !process.env.ConEmuDir) return
+
+    // Hack to do https://github.com/sindresorhus/log-symbols/pull/24
+    const reporter = require.resolve('vfile-reporter-pretty/package.json')
+    const basedir = require('path').dirname(reporter)
+    const symbolsPath = require.resolve('log-symbols', { paths: [basedir] })
+    const symbols = require(symbolsPath)
+    const chalk = require('chalk')
+
+    symbols.info = chalk.blue('ℹ')
+    symbols.success = chalk.green('✔')
+    symbols.warning = chalk.yellow('⚠')
+    symbols.error = chalk.red('✖')
+  } catch {
+    // Ignore
+  }
 }
