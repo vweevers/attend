@@ -20,7 +20,7 @@ class ProjectClone {
     }
 
     this.cwd = path.resolve('.attend', slug.toLowerCase())
-    this.url = `https://github.com/${slug}.git`
+    this.url = `git@github.com:${slug}.git`
   }
 
   async open () {
