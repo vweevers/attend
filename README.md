@@ -6,6 +6,8 @@
 [![Markdown Style Guide](https://img.shields.io/badge/md_style-hallmark-brightgreen.svg)](https://www.npmjs.org/package/hallmark)
 [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
+![demo](demo.gif)
+
 ## Highlights :sparkles:
 
 - Loosely coupled plugins: their input is a directory, output is an array of affected files
