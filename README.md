@@ -39,7 +39,8 @@ async function main () {
   // Or await suite.lint()
   await suite.fix({
     branch: 'attend/hallmark-3.1.0',
-    commit: 'Fix markdown' // TODO
+    commit: 'Bump hallmark to 3.1.0',
+    pr: 'Bump hallmark to 3.1.0' // TODO
   })
 }
 
@@ -72,9 +73,9 @@ main()
   - [ ] allow replacing `attend-reporter`
 - helpers:
   - [x] `branch(name)`
-  - [ ] `commit(message, description)`
-    - [ ] `git add -A` for convenience
-    - [ ] Do nothing if nothing changed
+  - [x] `commit(message)`
+    - [x] `git add -A` for convenience
+    - [x] Do nothing if nothing changed
     - [ ] Amend previous commit if message is the same (and ours)
   - [ ] `pr(title)`
   - [ ] `rebase()`

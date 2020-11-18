@@ -4,7 +4,7 @@ const vfile = require('vfile')
 const reporter = require('attend-reporter')
 const EventEmitter = require('events')
 const path = require('path')
-const builtins = require('./builtins')
+const helpers = require('./helpers')
 
 const kPlugins = Symbol('kPlugins')
 const kRun = Symbol('kRun')
@@ -137,7 +137,7 @@ for (const k of ['init', 'lint', 'fix']) {
     const steps = []
 
     if (options.branch) {
-      const work = async (project) => builtins.branch(project, options.branch)
+      const work = async (project) => helpers.branch(project, options.branch)
       steps.push({ name: 'branch', work })
     }
 
@@ -151,6 +151,11 @@ for (const k of ['init', 'lint', 'fix']) {
           steps.push({ name, work, plugin })
         }
       }
+    }
+
+    if (options.commit) {
+      const work = async (project) => helpers.commit(project, options.commit)
+      steps.push({ name: 'commit', work })
     }
 
     return this[kRun](steps)
