@@ -11,6 +11,7 @@
   "dependencies": {
     "attend-hallmark": "file:vendor/attend-hallmark",
     "attend-npm-dependencies": "file:vendor/attend-npm-dependencies",
+    "attend-npm-initial-install": "file:vendor/attend-npm-initial-install",
     "attend-npm-test": "file:vendor/attend-npm-test",
     "attend-project-clone": "file:vendor/attend-project-clone",
     "attend-reporter": "file:vendor/attend-reporter",

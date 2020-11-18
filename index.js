@@ -78,16 +78,16 @@ class Suite extends EventEmitter {
       try {
         for (const { name, work, plugin } of steps) {
           try {
-            const result = await this[kStep](project, name, work, plugin)
+            const ret = await this[kStep](project, name, work, plugin)
+            const result = ret ? { ...ret, project } : { files: [], project }
 
-            if (result) {
-              this.emit('result', { ...result, project })
+            // For consistency always emit result even if empty
+            this.emit('result', result)
 
-              // Stop project on warnings
-              if (result.files.find(hasWarningOrFatal)) {
-                ok = false
-                break
-              }
+            // Stop project on warnings
+            if (result.files.find(hasWarningOrFatal)) {
+              ok = false
+              break
             }
           } catch (err) {
             this.emit('result', errorResult(err, project, `attend:${name}`))

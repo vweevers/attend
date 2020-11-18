@@ -28,11 +28,13 @@ const suite = attend()
  .use(require('attend-project-clone'), 'vweevers/keyspace')
  .use(require('attend-project-clone'), 'Level/abstract-leveldown')
  .use(require('attend-project-clone'), 'Level/compose')
+ .use(require('attend-npm-initial-install'))
  .use(require('attend-npm-dependencies'), { only: ['hallmark'], bump: true })
  .use(require('attend-hallmark'))
  .use(require('attend-npm-test'))
 
 async function main () {
+  // Or await suite.lint()
   await suite.fix({
     branch: 'attend/hallmark-3.1.0',
     commit: 'Fix markdown' // TODO
@@ -77,6 +79,7 @@ main()
   - [ ] `execFile()` and `exec()`
 - plugins:
   - js:
+    - [x] `attend-npm-initial-install` (do npm install after cloning)
     - [x] `attend-npm-dependencies` (wrap `npm-check`)
     - [x] `attend-npm-test`
     - [ ] `attend-npm-package` (create new package, lint and fix it)

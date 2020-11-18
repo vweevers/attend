@@ -175,7 +175,7 @@ class LazyMessages {
 
     for (const { item, msg, rule, level } of this.queue) {
       const pos = item ? position(item.moduleName, item.devDependency) : null
-      const origin = rule ? `attend-npm-check:${rule}` : null
+      const origin = rule ? `attend-npm-dependencies:${rule}` : null
 
       if (level !== 'info' && (!item || this.include(item))) {
         const message = packageFile.message(msg, pos, origin)
@@ -207,13 +207,19 @@ function packagefilter (pluginOptions) {
 }
 
 function npm (cwd, args, env, ee) {
-  env = { ...process.env, ...env }
+  env = {
+    ...process.env,
+    ...env,
+    npm_config_audit: 'false',
+    npm_config_progress: 'false',
+    npm_config_update_notifier: 'false',
+    npm_config_loglevel: 'http'
+  }
 
   return new Promise(function (resolve, reject) {
     const stdio = ['ignore', 'pipe', 'pipe']
     const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm'
-    const opts = { cwd, stdio, env }
-    const subprocess = spawn(npm, [...args, '--no-audit', '--no-progress'], opts)
+    const subprocess = spawn(npm, args, { cwd, stdio, env })
 
     if (!ee.emit('subprocess', subprocess)) {
       subprocess.stdout.pipe(process.stderr, { end: false })

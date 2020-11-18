@@ -1,0 +1,11 @@
+{
+  "name": "attend-npm-initial-install",
+  "version": "0.0.0",
+  "description": "Attend plugin to npm install if node_modules doesn't exist",
+  "private": true,
+  "dependencies": {
+  },
+  "engines": {
+    "node": ">=10"
+  }
+}
