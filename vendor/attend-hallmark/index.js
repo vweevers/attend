@@ -14,7 +14,7 @@ exports.init = async function () {
 }
 
 exports.lint = async function (options) {
-  return requireHallmark(options.cwd).lint({
+  return wrapHallmark(requireHallmark(options.cwd)).lint({
     // TODO: support disabling reporter in hallmark
     report: { _: [function noop () {}] },
     ...options
@@ -22,7 +22,7 @@ exports.lint = async function (options) {
 }
 
 exports.fix = async function (options) {
-  return requireHallmark(options.cwd).fix({
+  return wrapHallmark(requireHallmark(options.cwd)).fix({
     report: { _: [function noop () {}] },
     ...options
   })
@@ -87,6 +87,22 @@ function requireHallmark (cwd) {
   return require(path.dirname(fp))
 }
 
+// TODO: remove noisy info messages from hallmark
+function wrapHallmark (hallmark) {
+  return {
+    async lint (...args) {
+      const result = await hallmark.lint(...args)
+      result.files.forEach(stripInfo)
+      return result
+    },
+    async fix (...args) {
+      const result = await hallmark.fix(...args)
+      result.files.forEach(stripInfo)
+      return result
+    }
+  }
+}
+
 function tryRead (fp) {
   try {
     return fs.readFileSync(fp, 'utf8')
@@ -129,4 +145,12 @@ async function execFileLoose (...args) {
     if (!err.stderr || !err.stderr.startsWith('[')) throw err
     return err.stderr
   }
+}
+
+function stripInfo (file) {
+  file.messages = file.messages.filter(notInfo)
+}
+
+function notInfo (msg) {
+  return msg.fatal !== null
 }

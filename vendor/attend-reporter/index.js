@@ -88,14 +88,12 @@ exports.report = function (suite) {
   })
 
   suite.on('result', function (result) {
-    const report = verbose
-      ? reporter(result.files, { quiet: false })
-      : reporter(result.files.map(stripInfo), { quiet: true })
+    const report = reporter(result.files, { quiet: !verbose })
 
     if (report) {
       status('', true)
 
-      if (buffer.length) {
+      if (buffer.length && result.files.some(hasWarningOrFatal)) {
         process.stderr.write(Buffer.concat(buffer))
         process.stderr.write('\n')
       }
@@ -143,15 +141,6 @@ function describeSubprocess (subprocess) {
   return [file, ...args].join(' ')
 }
 
-function stripInfo (file) {
-  file.messages = file.messages.filter(notInfo)
-  return file
-}
-
-function notInfo (msg) {
-  return msg.fatal !== null
-}
-
 function packageName (cwd) {
   try {
     const fp = path.join(cwd, 'package.json')
@@ -159,6 +148,15 @@ function packageName (cwd) {
 
     return JSON.parse(json).name
   } catch {}
+}
+
+function hasWarningOrFatal (file) {
+  return file.messages.find(isWarningOrFatal)
+}
+
+function isWarningOrFatal (msg) {
+  // If .fatal is null, it's an info message
+  return msg.fatal === false || msg.fatal === true
 }
 
 // Enable unicode in Windows Terminal as well as ConEmu

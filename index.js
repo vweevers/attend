@@ -158,6 +158,11 @@ for (const k of ['init', 'lint', 'fix']) {
       steps.push({ name: 'commit', work })
     }
 
+    if (options.pr) {
+      const work = async (project) => helpers.pr(project, options.pr)
+      steps.push({ name: 'pr', work })
+    }
+
     return this[kRun](steps)
   }
 }
@@ -194,7 +199,8 @@ function Subs () {
 
 function errorResult (err, project, origin) {
   const file = vfile({ path: '.', cwd: project.cwd })
-  const message = file.message(String(err.stack || err), null, origin)
+  const reason = String(err.expected ? err.message || err : err.stack || err)
+  const message = file.message(reason, null, origin)
 
   message.fatal = true
 

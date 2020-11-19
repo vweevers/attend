@@ -3,7 +3,7 @@
 const path = require('path')
 const promisify = require('util').promisify
 const execFile = promisify(require('child_process').execFile)
-const gitPullOrClone = promisify(require('git-pull-or-clone'))
+const fs = require('fs')
 
 module.exports = function (slug) {
   return {
@@ -24,8 +24,8 @@ class ProjectClone {
   }
 
   async open () {
-    // TODO: check --single-branch logic
-    await gitPullOrClone(this.url, this.cwd, { depth: Infinity })
-    await execFile('git', ['fetch', '--tags'], { cwd: this.cwd })
+    if (!fs.existsSync(this.cwd)) {
+      await execFile('git', ['clone', '--recurse-submodules', this.url, this.cwd])
+    }
   }
 }

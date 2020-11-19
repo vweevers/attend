@@ -9,6 +9,7 @@
     "test": "standard"
   },
   "dependencies": {
+    "@octokit/core": "^3.2.1",
     "attend-hallmark": "file:vendor/attend-hallmark",
     "attend-npm-dependencies": "file:vendor/attend-npm-dependencies",
     "attend-npm-initial-install": "file:vendor/attend-npm-initial-install",
@@ -16,6 +17,7 @@
     "attend-project-clone": "file:vendor/attend-project-clone",
     "attend-reporter": "file:vendor/attend-reporter",
     "attend-standard": "file:vendor/attend-standard",
+    "parse-github-url": "^1.0.2",
     "vfile": "^4.2.0"
   },
   "devDependencies": {

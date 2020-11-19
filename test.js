@@ -38,7 +38,7 @@ async function main () {
   await suite.fix({
     branch: 'attend/hallmark-3.1.0',
     commit: 'Bump hallmark to 3.1.0',
-    pr: 'Bump hallmark to 3.1.0' // TODO
+    // pr: 'Bump hallmark to 3.1.0'
   })
 }
 

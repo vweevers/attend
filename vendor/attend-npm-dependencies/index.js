@@ -157,13 +157,10 @@ class LazyMessages {
       this.fatal(item, `Wants ${id} ${item.packageWanted}, has ${item.installed}`, 'no-mismatch')
     } else if (!item.semverValid) {
       this.fatal(item, `Fix invalid version: ${id} ${item.installed}`, 'valid-version')
-    } else if (item.packageWanted !== item.latest) {
+    } else if (this.bump && item.packageWanted !== item.latest) {
       // TODO: ignore patch/minor (item.bump) if range includes it
-      const action = this.bump ? 'Bump' : 'Can bump'
-      const level = this.bump ? 'warn' : 'info'
-      const msg = `${action} ${id} from ${item.packageWanted} to ${item.bump} ${item.latest}`
-
-      this[level](item, msg, 'bump')
+      const msg = `Bump ${id} from ${item.packageWanted} to ${item.bump} ${item.latest}`
+      this.warn(item, msg, 'bump')
     }
   }
 

@@ -21,7 +21,7 @@
 
 ## Example
 
-Upgrade `hallmark` in multiple GitHub repositories, fix their markdown and test:
+Upgrade `hallmark` in multiple GitHub repositories, fix their markdown, run tests and create a pull request:
 
 ```js
 const attend = require('attend')
@@ -40,7 +40,7 @@ async function main () {
   await suite.fix({
     branch: 'attend/hallmark-3.1.0',
     commit: 'Bump hallmark to 3.1.0',
-    pr: 'Bump hallmark to 3.1.0' // TODO
+    pr: 'Bump hallmark to 3.1.0'
   })
 }
 
@@ -71,13 +71,14 @@ main()
   - [ ] `attend-cli` (wrap plugin in cli)
   - [ ] run in github actions, (auto-?)convert reports to status check annotations
   - [ ] allow replacing `attend-reporter`
+  - [ ] change visual presentation of info messages
 - helpers:
   - [x] `branch(name)`
   - [x] `commit(message)`
     - [x] `git add -A` for convenience
     - [x] Do nothing if nothing changed
     - [ ] Amend previous commit if message is the same (and ours)
-  - [ ] `pr(title)`
+  - [x] `pr(title)`
   - [ ] `rebase()`
   - [ ] `execFile()` and `exec()`
 - plugins:
