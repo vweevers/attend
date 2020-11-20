@@ -49,7 +49,6 @@ class Suite extends EventEmitter {
     const original = process.cwd()
     const projects = []
 
-    let ok = true
     let defaultProject = true
 
     for (const plugin of this[kPlugins]) {
@@ -63,6 +62,8 @@ class Suite extends EventEmitter {
       projects.push(new LocalProject('.'))
     }
 
+    let passed = projects.length
+
     for (const project of projects) {
       try {
         await this[kStep](project, 'open', openProject)
@@ -71,7 +72,7 @@ class Suite extends EventEmitter {
         process.chdir(project.cwd)
       } catch (err) {
         this.emit('result', errorResult(err, project, 'attend:open'))
-        ok = false
+        passed--
         continue
       }
 
@@ -86,12 +87,12 @@ class Suite extends EventEmitter {
 
             // Stop project on warnings
             if (result.files.find(hasWarningOrFatal)) {
-              ok = false
+              passed--
               break
             }
           } catch (err) {
             this.emit('result', errorResult(err, project, `attend:${name}`))
-            ok = false
+            passed--
             break
           }
         }
@@ -100,7 +101,13 @@ class Suite extends EventEmitter {
       }
     }
 
-    if (!ok) process.exit(1)
+    this.emit('end', {
+      planned: projects.length,
+      failed: projects.length - passed,
+      passed
+    })
+
+    if (passed !== projects.length) process.exit(1)
   }
 
   async [kStep] (project, step, work, plugin) {

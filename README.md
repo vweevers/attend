@@ -71,7 +71,6 @@ main()
   - [ ] `attend-cli` (wrap plugin in cli)
   - [ ] run in github actions, (auto-?)convert reports to status check annotations
   - [ ] allow replacing `attend-reporter`
-  - [ ] change visual presentation of info messages
 - helpers:
   - [x] `branch(name)`
   - [x] `commit(message)`
@@ -79,6 +78,7 @@ main()
     - [x] Do nothing if nothing changed
     - [ ] Amend previous commit if message is the same (and ours)
   - [x] `pr(title)`
+    - [ ] Add rc for github token
   - [ ] `rebase()`
   - [ ] `execFile()` and `exec()`
 - plugins:

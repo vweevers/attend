@@ -1,10 +1,8 @@
 'use strict'
 
-patchWindowsTerminal()
-
-const style = require('chalk').bgWhite.black
+const chalk = require('chalk')
 const bytes = require('bytes')
-const reporter = require('vfile-reporter-pretty')
+const reporter = require('vfile-reporter-shiny')
 const ansiDiff = require('ansi-diff')
 const fs = require('fs')
 const path = require('path')
@@ -13,6 +11,8 @@ exports.report = function (suite) {
   const nameCache = new Map()
   const verbose = !!process.env.CI
   const diff = ansiDiff({ width: process.stdout.columns })
+  const headerPre = chalk.grey('| ')
+  const headerSep = chalk.grey(' | ')
   const buffer = []
 
   let lastLine = ''
@@ -45,14 +45,16 @@ exports.report = function (suite) {
     status(lastLine)
   }
 
+  function clearStatus () {
+    status('', true)
+  }
+
   process.stdout.on('resize', function () {
     diff.resize({ width: process.stdout.columns })
     status(lastLine, true)
   })
 
-  process.on('exit', function (code) {
-    status(code === 0 ? 'ok' : '', true)
-  })
+  process.on('exit', clearStatus)
 
   suite.on('step', function ({ project, name }) {
     status(header(project, name))
@@ -88,10 +90,10 @@ exports.report = function (suite) {
   })
 
   suite.on('result', function (result) {
-    const report = reporter(result.files, { quiet: !verbose })
+    const report = reporter(result.files, { quiet: !verbose, cwd: result.project.cwd })
 
     if (report) {
-      status('', true)
+      clearStatus()
 
       if (buffer.length && result.files.some(hasWarningOrFatal)) {
         process.stderr.write(Buffer.concat(buffer))
@@ -99,17 +101,28 @@ exports.report = function (suite) {
       }
 
       console.error(header(result.project))
-      console.error(report.trim())
+      console.error(report)
     }
 
     buffer.length = 0
   })
 
+  suite.on('end', function ({ planned, passed, failed }) {
+    clearStatus()
+    process.removeListener('exit', clearStatus)
+
+    if (planned > 1) {
+      console.log()
+      console.log(chalk.green(`  ${passed} projects passed`))
+      console.log(chalk[failed ? 'red' : 'grey'](`  ${failed} projects failed`))
+    }
+  })
+
   function header (project, ...extra) {
     const name = project ? getName(project.cwd) : null
-    const line = [name, ...extra].filter(Boolean).join(' | ')
+    const arr = [name, ...extra].filter(Boolean)
 
-    return line === '' ? '' : style(line)
+    return arr.length > 0 ? headerPre + arr.join(headerSep) : ''
   }
 
   function getName (cwd) {
@@ -157,26 +170,4 @@ function hasWarningOrFatal (file) {
 function isWarningOrFatal (msg) {
   // If .fatal is null, it's an info message
   return msg.fatal === false || msg.fatal === true
-}
-
-// Enable unicode in Windows Terminal as well as ConEmu
-function patchWindowsTerminal () {
-  try {
-    if (process.platform !== 'win32') return
-    if (!process.env.WT_SESSION && !process.env.ConEmuDir) return
-
-    // Hack to do https://github.com/sindresorhus/log-symbols/pull/24
-    const reporter = require.resolve('vfile-reporter-pretty/package.json')
-    const basedir = require('path').dirname(reporter)
-    const symbolsPath = require.resolve('log-symbols', { paths: [basedir] })
-    const symbols = require(symbolsPath)
-    const chalk = require('chalk')
-
-    symbols.info = chalk.blue('ℹ')
-    symbols.success = chalk.green('✔')
-    symbols.warning = chalk.yellow('⚠')
-    symbols.error = chalk.red('✖')
-  } catch {
-    // Ignore
-  }
 }
