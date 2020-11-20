@@ -21,7 +21,7 @@ async function run (options, fix) {
   const cwd = path.resolve(options.cwd || '.')
   const standard = requireStandard(cwd)
   const lintFiles = promisify(standard.lintFiles.bind(standard))
-  const results = await lintFiles(['.'], { cwd, fix: true })
+  const results = await lintFiles(['**/*.{js,jsx}'], { cwd, fix })
   const files = results.results.map(result => eslintToVFile(result, cwd))
 
   return { files }
