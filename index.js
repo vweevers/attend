@@ -85,8 +85,8 @@ class Suite extends EventEmitter {
             // For consistency always emit result even if empty
             this.emit('result', result)
 
-            // Stop project on warnings
-            if (result.files.find(hasWarningOrFatal)) {
+            // Stop project on warnings if frail is true
+            if (result.files.some(result.frail ? hasWarningOrFatal : hasFatal)) {
               passed--
               break
             }
@@ -221,12 +221,20 @@ async function openProject (project) {
 }
 
 function hasWarningOrFatal (file) {
-  return file.messages.find(isWarningOrFatal)
+  return file.messages.some(isWarningOrFatal)
 }
 
 function isWarningOrFatal (msg) {
   // If .fatal is null, it's an info message
   return msg.fatal === false || msg.fatal === true
+}
+
+function hasFatal (file) {
+  return file.messages.some(isFatal)
+}
+
+function isFatal (msg) {
+  return msg.fatal
 }
 
 function validateProject (project) {

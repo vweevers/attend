@@ -33,13 +33,14 @@ const suite = attend()
   .use(require('attend-npm-test'))
 
 async function main () {
-  // await suite.lint()
+  await suite.lint()
 
-  await suite.fix({
-    branch: 'attend/hallmark-3.1.0',
-    commit: 'Bump hallmark to 3.1.0',
-    // pr: 'Bump hallmark to 3.1.0'
-  })
+  // Did this, worked :)
+  // await suite.fix({
+  //   branch: 'attend/hallmark-3.1.0',
+  //   commit: 'Bump hallmark to 3.1.0',
+  //   pr: 'Bump hallmark to 3.1.0'
+  // })
 }
 
 main()

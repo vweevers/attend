@@ -160,7 +160,7 @@ class LazyMessages {
     } else if (this.bump && item.packageWanted !== item.latest) {
       // TODO: ignore patch/minor (item.bump) if range includes it
       const msg = `Bump ${id} from ${item.packageWanted} to ${item.bump} ${item.latest}`
-      this.warn(item, msg, 'bump')
+      this.fatal(item, msg, 'bump')
     }
   }
 

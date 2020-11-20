@@ -87,17 +87,23 @@ function requireHallmark (cwd) {
   return require(path.dirname(fp))
 }
 
-// TODO: remove noisy info messages from hallmark
 function wrapHallmark (hallmark) {
   return {
     async lint (...args) {
       const result = await hallmark.lint(...args)
+
+      // TODO: remove noisy info messages from hallmark
       result.files.forEach(stripInfo)
+      result.frail = true // Abort on warnings
+
       return result
     },
     async fix (...args) {
       const result = await hallmark.fix(...args)
+
       result.files.forEach(stripInfo)
+      result.frail = true // Abort on warnings
+
       return result
     }
   }

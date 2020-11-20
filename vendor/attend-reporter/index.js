@@ -95,7 +95,7 @@ exports.report = function (suite) {
     if (report) {
       clearStatus()
 
-      if (buffer.length && result.files.some(hasWarningOrFatal)) {
+      if (buffer.length && result.files.some(hasFatal)) {
         process.stderr.write(Buffer.concat(buffer))
         process.stderr.write('\n')
       }
@@ -163,11 +163,10 @@ function packageName (cwd) {
   } catch {}
 }
 
-function hasWarningOrFatal (file) {
-  return file.messages.find(isWarningOrFatal)
+function hasFatal (file) {
+  return file.messages.some(isFatal)
 }
 
-function isWarningOrFatal (msg) {
-  // If .fatal is null, it's an info message
-  return msg.fatal === false || msg.fatal === true
+function isFatal (msg) {
+  return msg.fatal
 }
