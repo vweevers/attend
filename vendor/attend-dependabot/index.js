@@ -187,7 +187,7 @@ async function run (project, options, fix) {
 async function guessDesiredEcosystems (cwd, project) {
   const desiredEcosystems = new Set()
 
-  if (fs.existsSync(path.join(cwd, 'package.json'))) {
+  if (hasNpmDependencies(cwd)) {
     desiredEcosystems.add('npm')
   }
 
@@ -233,7 +233,7 @@ function guessDesiredIgnore (cwd, ecosystem) {
 
   try {
     if (ecosystem === 'npm') {
-      const pkg = require(path.join(cwd, 'package.json'))
+      const pkg = readNpmPackage(cwd)
 
       // Migrate from defunct greenkeeper
       if (pkg.greenkeeper && Array.isArray(pkg.greenkeeper.ignore)) {
@@ -247,10 +247,30 @@ function guessDesiredIgnore (cwd, ecosystem) {
   return ignore
 }
 
+function hasNpmDependencies (cwd) {
+  try {
+    const pkg = readNpmPackage(cwd)
+
+    for (const k of ['dependencies', 'devDependencies', 'optionalDependencies']) {
+      if (pkg && pkg[k] && Object.keys(pkg[k]).length > 0) return true
+    }
+
+    return false
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      return false
+    }
+
+    throw err
+  }
+
+  return true
+}
+
 function hasDependency (cwd, ecosystem, name) {
   try {
     if (ecosystem === 'npm') {
-      const pkg = require(path.join(cwd, 'package.json'))
+      const pkg = readNpmPackage(cwd)
 
       for (const k of ['dependencies', 'devDependencies', 'optionalDependencies']) {
         if (pkg[k] && pkg[k][name]) return true
@@ -261,4 +281,13 @@ function hasDependency (cwd, ecosystem, name) {
   } catch {}
 
   return true
+}
+
+function readNpmPackage (cwd) {
+  // TODO: cache, but just for the lifetime of lint/fix; don't use require()
+  // because other attend plugins can change the contents of package.json
+  const fp = path.join(cwd, 'package.json')
+  const json = fs.readFileSync(fp, 'utf8')
+
+  return JSON.parse(json)
 }
