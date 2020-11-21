@@ -1,0 +1,11 @@
+{
+  "name": "attend-org-projects",
+  "version": "0.0.0",
+  "description": "Attend plugin to run Attend on repositories from a GitHub org or user",
+  "private": true,
+  "dependencies": {
+    "@octokit/core": "^3.2.1",
+    "@octokit/plugin-throttling": "^3.3.3",
+    "uniq": "^1.0.1"
+  }
+}

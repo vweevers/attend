@@ -62,6 +62,8 @@ class ProjectClone {
   }
 }
 
+module.exports.ProjectClone = ProjectClone
+
 function normalizeOptions (options) {
   if (typeof options === 'string') {
     options = { slug: options }

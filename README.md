@@ -81,6 +81,9 @@ main()
     - [ ] Add rc for github token
   - [ ] `rebase()`
   - [ ] `execFile()` and `exec()`
+- projects:
+  - [x] `attend-project-clone` (clone github repo by slug)
+  - [x] `attend-org-projects` (clone all github repos from org or user)
 - plugins:
   - js:
     - [x] `attend-npm-initial-install` (do npm install after cloning)
