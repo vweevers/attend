@@ -147,22 +147,22 @@ class LazyMessages {
     if (item.regError) {
       this.fatal(item, error(item.regError), 'no-registry-error')
     } else if (item.unused) {
-      this.warn(item, `Remove unused dependency ${id}`, 'no-unused')
+      this.warn(item, `Remove unused dependency \`${id}\``, 'no-unused')
     } else if (item.notInstalled && !this.bare) {
-      this.fatal(item, `Install missing dependency ${id}`, 'no-missing')
+      this.fatal(item, `Install missing dependency \`${id}\``, 'no-missing')
     } else if (item.pkgError && !this.bare) {
       this.fatal(item, error(item.pkgError), 'valid-package')
     } else if (item.mismatch && !this.bare) {
-      this.fatal(item, `Wants ${id} ${item.packageWanted}, has ${item.installed}`, 'no-mismatch')
+      this.fatal(item, `Wants \`${id} ${item.packageWanted}\`, has \`${item.installed}\``, 'no-mismatch')
     } else if (!item.semverValid && !this.bare) {
-      this.fatal(item, `Fix invalid version: ${id} ${item.installed}`, 'valid-version')
+      this.fatal(item, `Fix invalid version: \`${id} ${item.installed}\``, 'valid-version')
     } else if (this.bump && item.packageWanted !== item.latest) {
       if (/^\d/.test(item.packageJson) && !this.include.only(item)) {
         // Probably pinned for a reason. Only warn
-        const msg = `Bump pinned ${id} from ${item.packageWanted} to ${item.latest}`
+        const msg = `Bump pinned \`${id}\` from \`${item.packageWanted}\` to \`${item.latest}\``
         this.warn(item, msg, 'bump')
       } else {
-        const msg = `Bump ${id} from ${item.packageWanted} to ${item.latest}`
+        const msg = `Bump \`${id}\` from \`${item.packageWanted}\` to \`${item.latest}\``
         this.fatal(item, msg, 'bump')
       }
     }
