@@ -30,7 +30,13 @@ exports.branch = async function (project, name) {
       await execFile('git', ['checkout', name], { cwd })
       await execFile('git', ['pull'], { cwd })
     } else {
-      await execFile('git', ['fetch', '--tags'], { cwd })
+      // TODO: skip this if checkout is sparse and repo has submodules
+      try {
+        await execFile('git', ['fetch', '--tags'], { cwd })
+      } catch (err) {
+        console.error(err)
+      }
+
       await execFile('git', ['checkout', '--no-track', '-b', name, 'origin/' + def], { cwd })
     }
   }

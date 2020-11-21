@@ -28,7 +28,7 @@ module.exports = function (options) {
   }
 
   const octokit = octo({ auth: token })
-  const order = 'orderBy: {field: NAME, direction: ASC}'
+  const order = 'orderBy: { field: NAME, direction: ASC }'
   const q = ['first: 100', 'after: $cursor', order]
 
   if (filter.isPrivate != null) {
@@ -48,17 +48,15 @@ module.exports = function (options) {
           `query ($login: String!, $cursor: String) {
             ${object}(login: $login) {
               repositories(${q.join(', ')}) {
-                pageInfo {
-                  endCursor
-                  hasNextPage
-                }
+                pageInfo { endCursor, hasNextPage }
                 nodes {
-                  defaultBranchRef {
-                    name
-                  }
+                  defaultBranchRef { name }
                   name
                   isArchived
                   isEmpty
+                  languages(first: 3, orderBy: { field: SIZE, direction: DESC }) {
+                    nodes { name }
+                  }
                 }
               }
             }
@@ -96,7 +94,8 @@ module.exports = function (options) {
         return new ProjectClone({
           ...options.clone,
           slug: `${login}/${repository.name}`,
-          defaultBranch: repository.defaultBranchRef.name
+          defaultBranch: repository.defaultBranchRef.name,
+          languages: repository.languages.nodes.map(lang => lang.name)
         })
       }
     }

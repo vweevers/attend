@@ -11,6 +11,7 @@ const kDepth = Symbol('kDepth')
 const kSparse = Symbol('kSparse')
 const kCwd = Symbol('kCwd')
 const kDefaultBranch = Symbol('kDefaultBranch')
+const kLanguages = Symbol('kLanguages')
 
 module.exports = function (pluginOptions) {
   const options = normalizeOptions(pluginOptions)
@@ -32,6 +33,7 @@ class ProjectClone {
     this[kSparse] = options.sparse
     this[kCwd] = location(this[kDepth], this[kSparse], options.slug)
     this[kDefaultBranch] = options.defaultBranch || null
+    this[kLanguages] = options.languages || []
   }
 
   get cwd () {
@@ -40,6 +42,10 @@ class ProjectClone {
 
   get defaultBranch () {
     return this[kDefaultBranch]
+  }
+
+  get languages () {
+    return this[kLanguages]
   }
 
   async open () {

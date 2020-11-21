@@ -119,7 +119,7 @@ main()
   - markdown:
     - [x] `attend-hallmark`
   - ci:
-    - [ ] `attend-dependabot` (create dependabot.yml, lint and fix)
+    - [x] `attend-dependabot` (create dependabot.yml, lint and fix)
     - [ ] `attend-migrate-travis-org-to-com`
     - [ ] `attend-migrate-travis-to-actions`
 
