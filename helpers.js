@@ -71,7 +71,7 @@ exports.pr = async function (project, title) {
   // Base: the name of the branch you want the changes pulled into
   // Head: the name of the branch where your changes are implemented
   const octokit = new Octokit({ auth: token })
-  const base = await defaultBranchQuery(octokit, owner, name)
+  const base = project.defaultBranch || (await defaultBranchQuery(octokit, owner, name))
   const head = await currentBranch(cwd)
 
   if (!head) {
