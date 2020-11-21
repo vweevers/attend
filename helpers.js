@@ -24,10 +24,15 @@ exports.branch = async function (project, name) {
   const current = await currentBranch(cwd)
 
   if (current !== name) {
-    const from = (await defaultBranch(cwd)) || 'main'
+    const def = project.defaultBranch || (await defaultBranch(cwd)) || 'main'
 
-    await execFile('git', ['fetch', '--tags'], { cwd })
-    await execFile('git', ['checkout', '--no-track', '-b', name, 'origin/' + from], { cwd })
+    if (name === def) {
+      await execFile('git', ['checkout', name], { cwd })
+      await execFile('git', ['pull'], { cwd })
+    } else {
+      await execFile('git', ['fetch', '--tags'], { cwd })
+      await execFile('git', ['checkout', '--no-track', '-b', name, 'origin/' + def], { cwd })
+    }
   }
 }
 
