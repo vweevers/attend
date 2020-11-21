@@ -52,6 +52,7 @@ module.exports = function (options) {
                 nodes {
                   defaultBranchRef { name }
                   name
+                  nameWithOwner
                   isArchived
                   isEmpty
                   languages(first: 3, orderBy: { field: SIZE, direction: DESC }) {
@@ -75,6 +76,12 @@ module.exports = function (options) {
       return uniq(repositories, cmpName).map(map)
 
       function include (repository) {
+        // Exclude repositories that were transferred to another owner
+        if (repository.nameWithOwner !== `${login}/${repository.name}`) {
+          return false
+        }
+
+        // Exclude by properties
         if (filter.isArchived != null && repository.isArchived !== filter.isArchived) {
           return false
         } else if (filter.isEmpty != null && repository.isEmpty !== filter.isEmpty) {
