@@ -1,6 +1,6 @@
 'use strict'
 
-const attend = require('.')
+const attend = require('..')
 
 const suite = attend()
   .use(require('attend-project-clone'), 'Level/abstract-leveldown')
