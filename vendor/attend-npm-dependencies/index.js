@@ -26,17 +26,13 @@ module.exports = function (pluginOptions) {
 
   plugin.lint = async function (options) {
     const cwd = path.resolve(options.cwd || '.')
-    const lazyMessages = new LazyMessages(cwd, include, bump)
+    const bare = !fs.existsSync(path.join(cwd, 'node_modules'))
+    const lazyMessages = new LazyMessages(cwd, include, bump, bare)
+    const currentState = await npmCheck({ cwd, skipUnused: true })
+    const packages = currentState.get('packages')
 
-    if (!fs.existsSync(path.join(cwd, 'node_modules'))) {
-      lazyMessages.fatal(null, `Install dependencies`, 'install')
-    } else {
-      const currentState = await npmCheck({ cwd, skipUnused: true })
-      const packages = currentState.get('packages')
-
-      for (const item of packages) {
-        lazyMessages.lintItem(item)
-      }
+    for (const item of packages) {
+      lazyMessages.lintItem(item)
     }
 
     return { files: [lazyMessages.finalize()] }
@@ -44,9 +40,11 @@ module.exports = function (pluginOptions) {
 
   plugin.fix = async function (options) {
     const cwd = path.resolve(options.cwd || '.')
-    const lazyMessages = new LazyMessages(cwd, include, bump)
+    const bare = !fs.existsSync(path.join(cwd, 'node_modules'))
+    const lazyMessages = new LazyMessages(cwd, include, bump, bare)
 
-    if (!fs.existsSync(path.join(cwd, 'node_modules'))) {
+    // TODO: in bare mode, update package.json directly without npm
+    if (bare) {
       await npm(cwd, ['i'], null, plugin)
     }
 
@@ -68,7 +66,7 @@ module.exports = function (pluginOptions) {
         lazyMessages.lintItem(item)
       } else if (item.unused) {
         remove[item.devDependency ? 'dev' : 'prod'].push(item.moduleName)
-      } else if (fixable(item, bump)) {
+      } else if (fixable(item, bump, bare)) {
         const prefix = item.packageJson[0]
         const group = item.devDependency ? 'dev' : 'prod'
         const type = prefix === '^' ? 'caret' : prefix === '~' ? 'tilde' : 'default'
@@ -104,12 +102,12 @@ module.exports = function (pluginOptions) {
   return plugin
 }
 
-function fixable (item, bump) {
+function fixable (item, bump, bare) {
   return (
-    item.mismatch ||
-    item.pkgError ||
-    !item.semverValid ||
-    item.notInstalled ||
+    (!bare && item.mismatch) ||
+    (!bare && item.pkgError) ||
+    (!bare && !item.semverValid) ||
+    (!bare && item.notInstalled) ||
     (bump && item.packageWanted !== item.latest)
   )
 }
@@ -123,10 +121,11 @@ function tryRead (fp) {
 }
 
 class LazyMessages {
-  constructor (cwd, include, bump) {
+  constructor (cwd, include, bump, bare) {
     this.cwd = cwd
     this.include = include
     this.bump = bump
+    this.bare = bare
     this.queue = []
   }
 
@@ -149,13 +148,13 @@ class LazyMessages {
       this.fatal(item, error(item.regError), 'no-registry-error')
     } else if (item.unused) {
       this.warn(item, `Remove unused dependency ${id}`, 'no-unused')
-    } else if (item.notInstalled) {
+    } else if (item.notInstalled && !this.bare) {
       this.fatal(item, `Install missing dependency ${id}`, 'no-missing')
-    } else if (item.pkgError) {
+    } else if (item.pkgError && !this.bare) {
       this.fatal(item, error(item.pkgError), 'valid-package')
-    } else if (item.mismatch) {
+    } else if (item.mismatch && !this.bare) {
       this.fatal(item, `Wants ${id} ${item.packageWanted}, has ${item.installed}`, 'no-mismatch')
-    } else if (!item.semverValid) {
+    } else if (!item.semverValid && !this.bare) {
       this.fatal(item, `Fix invalid version: ${id} ${item.installed}`, 'valid-version')
     } else if (this.bump && item.packageWanted !== item.latest) {
       // TODO: ignore patch/minor (item.bump) if range includes it
