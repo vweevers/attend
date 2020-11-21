@@ -55,6 +55,7 @@ module.exports = function (options) {
                   nameWithOwner
                   isArchived
                   isEmpty
+                  pushedAt
                   languages(first: 3, orderBy: { field: SIZE, direction: DESC }) {
                     nodes { name }
                   }
@@ -86,7 +87,12 @@ module.exports = function (options) {
           return false
         } else if (filter.isEmpty != null && repository.isEmpty !== filter.isEmpty) {
           return false
-        } else if (ignore.length && ignore.includes(repository.name.toLowerCase())) {
+        } else if (filter.maxAge && Date.now() - new Date(repository.pushedAt) > filter.maxAge) {
+          return false
+        }
+
+        // Exclude by name
+        if (ignore.length && ignore.includes(repository.name.toLowerCase())) {
           return false
         } else if (ignore.length && ignore.includes((`${login}/${repository.name}`).toLowerCase())) {
           return false
