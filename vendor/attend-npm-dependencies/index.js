@@ -157,9 +157,14 @@ class LazyMessages {
     } else if (!item.semverValid && !this.bare) {
       this.fatal(item, `Fix invalid version: ${id} ${item.installed}`, 'valid-version')
     } else if (this.bump && item.packageWanted !== item.latest) {
-      // TODO: ignore patch/minor (item.bump) if range includes it
-      const msg = `Bump ${id} from ${item.packageWanted} to ${item.bump} ${item.latest}`
-      this.fatal(item, msg, 'bump')
+      if (/^\d/.test(item.packageJson) && !this.include.only(item)) {
+        // Probably pinned for a reason. Only warn
+        const msg = `Bump pinned ${id} from ${item.packageWanted} to ${item.latest}`
+        this.warn(item, msg, 'bump')
+      } else {
+        const msg = `Bump ${id} from ${item.packageWanted} to ${item.latest}`
+        this.fatal(item, msg, 'bump')
+      }
     }
   }
 
@@ -194,12 +199,20 @@ function packagefilter (pluginOptions) {
   const only = [].concat(pluginOptions.only || [])
   const ignore = [].concat(pluginOptions.ignore || [])
 
-  return function (item) {
+  // Check if a dependency should be included
+  const include = function (item) {
     if (only.length && !only.includes(item.moduleName)) return false
     if (ignore.includes(item.moduleName)) return false
 
     return true
   }
+
+  // Check if a dependency is explicitly included
+  include.only = function (item) {
+    return only.includes(item.moduleName)
+  }
+
+  return include
 }
 
 function npm (cwd, args, env, ee) {
