@@ -5,16 +5,24 @@ const attend = require('..')
 const opts = {
   filter: {
     isFork: false,
-    isPrivate: false
+    isPrivate: false,
+    maxAge: 2 * 365 * 24 * 60 * 60 * 1e3
   },
   ignore: [
     // Exclude repositores by name or slug
-    'awesome',
-    'Level/leveldown-mobile',
-    'Level/leveldown-hyper',
-    'Level/level-fstream',
-    'Level/level-hyper',
-    'Level/level-ttl'
+    'attend',
+    'about-native-modules',
+    'detect-tabular',
+    'map-tabular-keys',
+    'napi-functions',
+    'section-remark',
+    'student-histogram',
+    'spreadsheet-stream',
+    'tabular-stream',
+    'tmpgen',
+    'win-dummy-exe',
+    'win-find-jscript-compiler',
+    'windows-firefox'
   ],
   clone: {
     depth: 1,
@@ -24,9 +32,8 @@ const opts = {
 }
 
 const suite = attend()
-  // Clone all repositories of github orgs
-  .use(require('attend-org-projects'), { org: 'Level', ...opts })
-  .use(require('attend-org-projects'), { org: 'airtap', ...opts })
+  // Clone all repositories of github user
+  .use(require('attend-org-projects'), { user: 'vweevers', ...opts })
   .use(require('attend-dependabot'), {
     interval: 'monthly',
     npm: {
