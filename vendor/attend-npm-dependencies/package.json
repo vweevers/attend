@@ -6,6 +6,10 @@
   "dependencies": {
     "json-source-map": "0.6.1",
     "npm-check": "^5.9.2",
+    "packument": "^1.0.0",
+    "packument-package": "^1.0.0",
+    "semver": "^7.3.2",
+    "thunky-with-args": "^1.0.0",
     "vfile": "^4.2.0"
   },
   "engines": {
