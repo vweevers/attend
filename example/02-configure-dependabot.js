@@ -14,7 +14,8 @@ const opts = {
     'Level/leveldown-hyper',
     'Level/level-fstream',
     'Level/level-hyper',
-    'Level/level-ttl'
+    'Level/level-ttl',
+    'Level/rocksdb'
   ],
   clone: {
     depth: 1,
@@ -27,17 +28,17 @@ const suite = attend()
   // Clone all repositories of github orgs
   .use(require('attend-org-projects'), { org: 'Level', ...opts })
   .use(require('attend-org-projects'), { org: 'airtap', ...opts })
+  .use(require('attend-npm-dependencies'))
   .use(require('attend-dependabot'), {
     interval: 'monthly',
     npm: {
       // Ignore dependencies (if found in package.json)
       ignore: [
-        'standard',
+        'buffer',
         'dependency-check',
-        'tempy',
-        'nyc',
         'sinon',
-        'cross-env',
+        'engine.io',
+        '@httptoolkit/osx-find-executable',
         'uuid'
       ]
     }

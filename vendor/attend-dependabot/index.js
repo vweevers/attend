@@ -47,12 +47,12 @@ async function run (project, options, fix) {
   if (fix && !config.updates) {
     config.updates = []
   } else if (!Array.isArray(config.updates)) {
-    file.message('Expecting "updates" to be an array', null, `attend-dependabot:updates`).fatal = true
+    file.message('Expecting \`updates\` to be an array', null, `attend-dependabot:updates`).fatal = true
     return { files: [file] }
   }
 
   if (!fix && config.updates.some(e => !e)) {
-    file.message('Expecting "updates" entries to be non-null', null, `attend-dependabot:updates`).fatal = true
+    file.message('Expecting \`updates\` entries to be non-null', null, `attend-dependabot:updates`).fatal = true
   }
 
   config.updates = config.updates.filter(Boolean)
@@ -92,7 +92,7 @@ async function run (project, options, fix) {
         if (!entry.schedule) entry.schedule = {}
         entry.schedule.interval = options.interval
       } else {
-        file.message(`Schedule interval should be "${options.interval}"`, null, `attend-dependabot:schedule-interval`)
+        file.message(`Schedule interval should be \`${options.interval}\``, null, `attend-dependabot:schedule-interval`)
       }
     }
 
@@ -105,7 +105,7 @@ async function run (project, options, fix) {
         }
 
         if (entry.ignore.some(e => !e || !e['dependency-name'])) {
-          file.message('Expecting "ignore" entries to have a name', null, `attend-dependabot:ignore`).fatal = true
+          file.message('Expecting \`ignore\` entries to have a name', null, `attend-dependabot:ignore`).fatal = true
         }
       }
     }
@@ -114,6 +114,7 @@ async function run (project, options, fix) {
   for (const ecosystem of desiredEcosystems) {
     if (!currentEcosystems.has(ecosystem)) {
       if (fix) {
+        file.info(`Adding \`${ecosystem}\` package ecosystem`, null, `attend-dependabot:ecosystems`)
         currentEcosystems.add(ecosystem)
         config.updates.push({
           'package-ecosystem': ecosystem,
@@ -123,7 +124,7 @@ async function run (project, options, fix) {
           }
         })
       } else {
-        file.message(`Add "${ecosystem}" package ecosystem`, null, `attend-dependabot:ecosystems`).fatal = true
+        file.message(`Add \`${ecosystem}\` package ecosystem`, null, `attend-dependabot:ecosystems`).fatal = true
       }
     }
   }
@@ -131,7 +132,7 @@ async function run (project, options, fix) {
   for (const ecosystem of currentEcosystems) {
     if (!desiredEcosystems.has(ecosystem)) {
       // Not an error
-      file.message(`Found extra "${ecosystem}" package ecosystem`, null, `attend-dependabot:ecosystems`)
+      file.message(`Found extra \`${ecosystem}\` package ecosystem`, null, `attend-dependabot:ecosystems`)
     }
   }
 
@@ -140,9 +141,9 @@ async function run (project, options, fix) {
   for (const entry of config.updates) {
     const ecosystem = entry['package-ecosystem']
     const ecosystemOptions = (ecosystem && options[ecosystem]) || {}
-    const desiredIgnore = (ecosystemOptions.ignore && ecosystemOptions.ignore) || []
+    const desiredIgnore = ecosystemOptions.ignore ? ecosystemOptions.ignore.slice() : []
 
-    desiredIgnore.push(...guessDesiredIgnore(cwd, ecosystem))
+    desiredIgnore.push(...guessDesiredIgnore(cwd, project, ecosystem, file, desiredIgnore, entry.ignore || []))
 
     if (!desiredIgnore.length) continue
     if (fix && !entry.ignore) entry.ignore = []
@@ -228,11 +229,31 @@ function isFatal (msg) {
   return msg.fatal
 }
 
-function guessDesiredIgnore (cwd, ecosystem) {
+function guessDesiredIgnore (cwd, project, ecosystem, file, desiredIgnore, currentIgnore) {
   const ignore = []
 
-  try {
-    if (ecosystem === 'npm') {
+  if (ecosystem === 'npm') {
+    // Reuse info gathered by attend-npm-dependencies
+    if (project.packages && project.packages.npm) {
+      for (const item of project.packages.npm) {
+        if (item.ignoreUpdates) {
+          ignore.push(item.id)
+
+          // TODO: refactor
+          if (!desiredIgnore.includes(item.id) && !currentIgnore.some(dep => dep && dep['dependency-name'] === item.id)) {
+            file.info(`Ignoring \`${item.id}\` in \`${ecosystem}\``, null, `attend-dependabot:ignore`)
+          }
+        } else if (item.outdated) {
+          file.message(
+            `Dependabot will want to bump \`${item.id}\` in \`${ecosystem}\``,
+            null,
+            `attend-dependabot:no-outdated`
+          )
+        }
+      }
+    }
+
+    try {
       const pkg = readNpmPackage(cwd)
 
       // Migrate from defunct greenkeeper
@@ -241,8 +262,8 @@ function guessDesiredIgnore (cwd, ecosystem) {
           if (name && typeof name === 'string') ignore.push(name)
         }
       }
-    }
-  } catch {}
+    } catch {}
+  }
 
   return ignore
 }

@@ -25,24 +25,26 @@ module.exports = function (pluginOptions) {
   const ignore = pluginOptions.ignore
   const bump = !!pluginOptions.bump
 
-  plugin.init = async function (options) {
-    const cwd = path.resolve(options.cwd || '.')
+  plugin.init = async function (project) {
+    const cwd = path.resolve(project.cwd || '.')
 
     if (!fs.existsSync(path.join(cwd, 'node_modules'))) {
       await npm(cwd, ['i'], null, plugin)
     }
   }
 
-  plugin.lint = async function (options) {
-    const cwd = path.resolve(options.cwd || '.')
+  plugin.lint = async function (project) {
+    const cwd = path.resolve(project.cwd || '.')
     const bare = !fs.existsSync(path.join(cwd, 'node_modules'))
     const packages = await check({ cwd, bump, bare, only, ignore })
+
+    exposePackages(project, packages)
 
     return { files: [finalize(cwd, packages)] }
   }
 
-  plugin.fix = async function (options) {
-    const cwd = path.resolve(options.cwd || '.')
+  plugin.fix = async function (project) {
+    const cwd = path.resolve(project.cwd || '.')
     const bare = !fs.existsSync(path.join(cwd, 'node_modules'))
     const remove = { prod: [], dev: [] }
     const install = { prod: { '^': [], '~': [], '': [] }, dev: { '^': [], '~': [], '': [] } }
@@ -50,12 +52,13 @@ module.exports = function (pluginOptions) {
 
     // In bare mode, update package.json directly without npm
     const newPkg = bare ? readPackage(cwd) : null
+    const fixedItems = []
 
     for (const item of packages) {
       const id = item.moduleName
 
       if (item.fix && item.fix.action === 'remove') {
-        item.messages = item.messages.filter(unfixable)
+        fixedItems.push(item)
 
         if (newPkg) {
           if (newPkg.dependencies) newPkg.dependencies[id] = undefined
@@ -65,7 +68,7 @@ module.exports = function (pluginOptions) {
           remove[item.devDependency ? 'dev' : 'prod'].push(id)
         }
       } else if (item.fix && item.fix.action === 'install' && item.fix.version) {
-        item.messages = item.messages.filter(unfixable)
+        fixedItems.push(item)
 
         if (newPkg) {
           const group = newPkg[item.devDependency ? 'devDependencies' : 'dependencies']
@@ -101,6 +104,13 @@ module.exports = function (pluginOptions) {
       }
     }
 
+    for (const item of fixedItems) {
+      item.messages = item.messages.filter(unfixable)
+      if (item.postfix) item.postfix(item, packages)
+    }
+
+    exposePackages(project, packages)
+
     // Get message positions *after* updating package.json
     return { files: [finalize(cwd, packages)] }
   }
@@ -123,8 +133,8 @@ async function check ({ cwd, bump, bare, only, ignore }) {
 
   // Don't check for unused deps, too many false positives
   const currentState = await npmCheck({ cwd, skipUnused: true })
+  const packages = currentState.get('packages')
   const include = packagefilter(only, ignore)
-  const packages = currentState.get('packages').filter(include)
   const pkg = readPackage(cwd)
 
   return Promise.all(packages.map(async function (item) {
@@ -146,52 +156,74 @@ async function check ({ cwd, bump, bare, only, ignore }) {
     }
 
     if (item.unused) {
+      // Collect information even if item is not included
       item.ignoreUpdates = true
-      item.fix = { action: 'remove' }
-      messages.push({
-        fatal: false,
-        fixable: true,
-        reason: `Remove unused dependency \`${id}\``,
-        ruleId: 'no-unused'
-      })
+
+      if (include(item)) {
+        item.fix = { action: 'remove' }
+        item.postfix = (item, packages) => {
+          const i = packages.indexOf(item)
+          if (i >= 0) packages.splice(i, 1)
+        }
+
+        messages.push({
+          fatal: false,
+          fixable: true,
+          reason: `Remove unused dependency \`${id}\``,
+          ruleId: 'no-unused'
+        })
+      }
+
       return item
     }
 
-    if (bump && semverGt(item.latest, item.packageWanted)) {
+    if (semverGt(item.latest, item.packageWanted)) {
       const explicitlyIncluded = include.only(item)
 
       if (!explicitlyIncluded && /^\d/.test(item.packageJson)) {
         // Probably pinned for a reason. Only warn
         item.outdated = true
         item.ignoreUpdates = true
-        messages.push({
-          fatal: false,
-          fixable: false,
-          reason: `Skip bumping pinned \`${id}\` from \`${item.packageWanted}\` to \`${item.latest}\``,
-          ruleId: 'bump'
-        })
+
+        if (bump && include(item)) {
+          messages.push({
+            fatal: false,
+            fixable: false,
+            reason: `Skip bumping pinned \`${id}\` from \`${item.packageWanted}\` to \`${item.latest}\``,
+            ruleId: 'bump'
+          })
+        }
       } else if (!explicitlyIncluded && !(await compatible(pkg, item))) {
         item.outdated = true
         item.ignoreUpdates = true
-        messages.push({
-          fatal: false,
-          fixable: false,
-          reason: `Skip bumping incompatible \`${id}\` to \`${item.latest}\``,
-          ruleId: 'bump'
-        })
+
+        if (bump && include(item)) {
+          messages.push({
+            fatal: false,
+            fixable: false,
+            reason: `Skip bumping incompatible \`${id}\` to \`${item.latest}\``,
+            ruleId: 'bump'
+          })
+        }
       } else {
         item.outdated = true
-        item.fix = updateFix(item)
-        messages.push({
-          fatal: true,
-          fixable: true,
-          reason: `Bump \`${id}\` from \`${item.packageWanted}\` to \`${item.latest}\``,
-          ruleId: 'bump'
-        })
+
+        if (bump && include(item)) {
+          item.fix = updateFix(item)
+          item.postfix = (item) => { item.outdated = false }
+
+          messages.push({
+            fatal: true,
+            fixable: true,
+            reason: `Bump \`${id}\` from \`${item.packageWanted}\` to \`${item.latest}\``,
+            ruleId: 'bump'
+          })
+        }
       }
     }
 
-    if (!bare) {
+    if (!bare && include(item)) {
+      // TODO: implement item.postfix(), not urgent
       if (item.notInstalled) {
         // An existing fix from above (with a new version) takes precedence
         item.fix = item.fix || installFix(item)
@@ -374,4 +406,26 @@ function readPackage (cwd) {
   const json = fs.readFileSync(fp, 'utf8')
 
   return JSON.parse(json)
+}
+
+// Allow other plugins to reuse our information, by simple monkey patching for
+// now. Could also consider refactoring out the check() function and then using
+// in-memory caching to achieve the same result without tight coupling.
+function exposePackages (project, packages) {
+  if (project.packages == null) {
+    project.packages = {}
+  }
+
+  // Group by ecosystem like dependabot
+  project.packages.npm = packages.map(function (pkg) {
+    return {
+      ...pkg,
+
+      // Explicitly list properties that are used externally.
+      // Anything else should be considered undocumented
+      id: pkg.moduleName,
+      ignoreUpdates: pkg.ignoreUpdates,
+      outdated: pkg.outdated
+    }
+  })
 }
