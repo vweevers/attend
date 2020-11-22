@@ -55,7 +55,7 @@ async function main () {
   // return
 
   await suite.fix({
-    branch: 'attend/dependabot-2020-11',
+    branch: 'attend/dependabot-2020-11'
     // commit: 'Configure dependabot',
     // pr: 'Configure dependabot'
   })
