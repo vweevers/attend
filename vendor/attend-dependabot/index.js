@@ -30,6 +30,7 @@ async function run (project, options, fix) {
   const cwd = path.resolve(project.cwd || '.')
   const fp = path.join(cwd, '.github/dependabot.yml')
   const file = vfile({ path: '.github/dependabot.yml', cwd })
+  const files = [file]
   const exists = fs.existsSync(fp)
 
   // TODO: use an AST parser so we can get positions
@@ -41,14 +42,14 @@ async function run (project, options, fix) {
     config.version = 2
   } else if (config.version !== 2) {
     file.message('Version must be 2', null, `attend-dependabot:version`).fatal = true
-    return { files: [file] }
+    return { files }
   }
 
   if (fix && !config.updates) {
     config.updates = []
   } else if (!Array.isArray(config.updates)) {
     file.message('Expecting \`updates\` to be an array', null, `attend-dependabot:updates`).fatal = true
-    return { files: [file] }
+    return { files }
   }
 
   if (!fix && config.updates.some(e => !e)) {
@@ -143,7 +144,7 @@ async function run (project, options, fix) {
     const ecosystemOptions = (ecosystem && options[ecosystem]) || {}
     const desiredIgnore = ecosystemOptions.ignore ? ecosystemOptions.ignore.slice() : []
 
-    desiredIgnore.push(...guessDesiredIgnore(cwd, project, ecosystem, file, desiredIgnore, entry.ignore || []))
+    desiredIgnore.push(...guessDesiredIgnore(cwd, project, ecosystem, file, desiredIgnore, entry.ignore || [], files))
 
     if (!desiredIgnore.length) continue
     if (fix && !entry.ignore) entry.ignore = []
@@ -182,7 +183,7 @@ async function run (project, options, fix) {
     }
   }
 
-  return { files: [file] }
+  return { files }
 }
 
 async function guessDesiredEcosystems (cwd, project) {
@@ -229,7 +230,8 @@ function isFatal (msg) {
   return msg.fatal
 }
 
-function guessDesiredIgnore (cwd, project, ecosystem, file, desiredIgnore, currentIgnore) {
+// TODO: refactor
+function guessDesiredIgnore (cwd, project, ecosystem, file, desiredIgnore, currentIgnore, files) {
   const ignore = []
 
   if (ecosystem === 'npm') {
@@ -253,55 +255,65 @@ function guessDesiredIgnore (cwd, project, ecosystem, file, desiredIgnore, curre
       }
     }
 
-    try {
-      const pkg = readNpmPackage(cwd)
+    const pkg = tryReadNpmPackage(cwd)
 
-      // Migrate from defunct greenkeeper
-      if (pkg.greenkeeper && Array.isArray(pkg.greenkeeper.ignore)) {
-        for (const name of pkg.greenkeeper.ignore) {
-          if (name && typeof name === 'string') ignore.push(name)
+    // Migrate from defunct greenkeeper
+    if (pkg.greenkeeper && Array.isArray(pkg.greenkeeper.ignore)) {
+      for (const id of pkg.greenkeeper.ignore) {
+        if (id && typeof id === 'string') {
+          file.info(`Ignoring \`${id}\` in \`${ecosystem}\``, null, `attend-dependabot:greenkeeper`)
+          ignore.push(id)
         }
       }
-    } catch {}
+    }
+
+    if (pkg.greenkeeper) {
+      pkg.greenkeeper = undefined
+
+      const fp = path.join(cwd, 'package.json')
+      const pfile = vfile({ path: 'package.json', cwd })
+
+      fs.writeFileSync(fp, JSON.stringify(pkg, null, 2) + '\n')
+
+      pfile.info('Removed `greenkeeper` configuration', null, `attend-dependabot:greenkeeper`)
+      files.push(pfile)
+    }
   }
 
   return ignore
 }
 
 function hasNpmDependencies (cwd) {
-  try {
-    const pkg = readNpmPackage(cwd)
+  const pkg = tryReadNpmPackage(cwd)
+
+  for (const k of ['dependencies', 'devDependencies', 'optionalDependencies']) {
+    if (pkg[k] && Object.keys(pkg[k]).length > 0) return true
+  }
+
+  return false
+}
+
+function hasDependency (cwd, ecosystem, id) {
+  if (ecosystem === 'npm') {
+    const pkg = tryReadNpmPackage(cwd)
 
     for (const k of ['dependencies', 'devDependencies', 'optionalDependencies']) {
-      if (pkg && pkg[k] && Object.keys(pkg[k]).length > 0) return true
+      if (pkg[k] && pkg[k][id]) return true
     }
 
     return false
-  } catch (err) {
-    if (err.code === 'ENOENT') {
-      return false
-    }
-
-    throw err
   }
 
   return true
 }
 
-function hasDependency (cwd, ecosystem, name) {
+function tryReadNpmPackage (cwd) {
   try {
-    if (ecosystem === 'npm') {
-      const pkg = readNpmPackage(cwd)
-
-      for (const k of ['dependencies', 'devDependencies', 'optionalDependencies']) {
-        if (pkg[k] && pkg[k][name]) return true
-      }
-
-      return false
-    }
-  } catch {}
-
-  return true
+    return readNpmPackage(cwd) || {}
+  } catch (err) {
+    if (err.code !== 'ENOENT') throw err
+    return {}
+  }
 }
 
 function readNpmPackage (cwd) {
