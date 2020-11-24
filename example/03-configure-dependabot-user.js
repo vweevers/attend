@@ -7,7 +7,6 @@ const suite = attend()
   .use(require('attend-org-projects'), {
     user: 'vweevers',
     filter: {
-      isFork: false,
       isPrivate: false,
       // Exclude repositores by age (of last push)
       maxAge: 2 * 365 * 24 * 60 * 60 * 1e3

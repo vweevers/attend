@@ -7,7 +7,6 @@ const suite = attend()
   .use(require('attend-org-projects'), {
     org: ['Level', 'airtap'],
     filter: {
-      isFork: false,
       isPrivate: false
     },
     ignore: [

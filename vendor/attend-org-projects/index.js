@@ -54,7 +54,7 @@ module.exports = function factory (options) {
   const login = options.org || options.user
   const object = options.org ? 'organization' : 'user'
   const ignore = (options.ignore || []).map(s => s.toLowerCase())
-  const filter = { isArchived: false, isEmpty: false, ...options.filter }
+  const filter = { isArchived: false, isEmpty: false, isFork: false, ...options.filter }
 
   if (!token) {
     const hint = 'required scopes: public_repo or repo'
