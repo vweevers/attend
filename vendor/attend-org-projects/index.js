@@ -73,6 +73,11 @@ module.exports = function factory (options) {
     q.push(`isFork: ${filter.isFork ? 'true' : 'false'}`)
   }
 
+  if (object === 'user') {
+    // Only include repositories that the current viewer owns
+    q.push('affiliations: OWNER')
+  }
+
   return {
     async projects () {
       const repositories = []

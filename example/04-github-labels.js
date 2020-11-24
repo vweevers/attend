@@ -7,6 +7,7 @@ const suite = attend()
   // Shallowly clone all repositories of github orgs
   .use(require('attend-org-projects'), {
     org: ['Level', 'airtap', 'prebuild'],
+    user: ['vweevers'],
     filter: {
       isPrivate: false
     },
