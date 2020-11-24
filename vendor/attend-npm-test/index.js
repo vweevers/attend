@@ -31,7 +31,7 @@ module.exports = function (pluginOptions) {
     const file = vfile({ path: '.', cwd })
 
     if (code !== 0) {
-      file.message(`npm test failed`, null, `attend-npm-test:test`).fatal = true
+      file.message('npm test failed', null, 'attend-npm-test:test').fatal = true
     }
 
     return { files: [file] }

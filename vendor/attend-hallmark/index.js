@@ -41,7 +41,7 @@ function requireHallmark (cwd) {
     const pos = contents ? depsPosition(contents) : null
 
     // We can't fix this, other plugins should
-    packageFile.message('Add hallmark to devDependencies', pos, `attend-hallmark:dev-dependency`)
+    packageFile.message('Add hallmark to devDependencies', pos, 'attend-hallmark:dev-dependency')
 
     return {
       async lint (options) {
@@ -70,7 +70,7 @@ function requireHallmark (cwd) {
     const pos = contents ? position(contents) : null
 
     // We can't fix this, other plugins should
-    packageFile.message('Bump hallmark to >= 3.1.0 for programmatic API', pos, `attend-hallmark:bump`)
+    packageFile.message('Bump hallmark to >= 3.1.0 for programmatic API', pos, 'attend-hallmark:bump')
 
     return {
       async lint (options) {

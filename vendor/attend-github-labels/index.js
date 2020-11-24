@@ -5,7 +5,6 @@ const githubLabelSync = require('github-label-sync')
 const gh = require('parse-github-url')
 const path = require('path')
 const fs = require('fs')
-const ignore = Symbol('ignore')
 
 module.exports = function (options) {
   if (Array.isArray(options)) {
@@ -49,11 +48,13 @@ module.exports = function (options) {
         lintDiff(file, diff)
       }
     } catch (err) {
+      let error = err
+
       if (err.endpoint) {
-        err = new ExpectedError(`GitHub error:\n${error.method} ${error.endpoint}\n${error.statusCode}: ${error.message}`)
+        error = new ExpectedError(`GitHub error:\n${err.method} ${err.endpoint}\n${err.statusCode}: ${err.message}`)
       }
 
-      file.message(err, null, 'attend-github-labels:sync').fatal = true
+      file.message(error, null, 'attend-github-labels:sync').fatal = true
     }
 
     return { files: [file] }
@@ -62,9 +63,9 @@ module.exports = function (options) {
 
 function lintDiff (file, diff) {
   for (const entry of diff) {
-		if (entry.type === 'missing') {
+    if (entry.type === 'missing') {
       file.message(`Label \`${entry.name}\` is missing`, null, 'attend-github-labels:no-missing').fatal = true
-		} else if (entry.type === 'changed') {
+    } else if (entry.type === 'changed') {
       const hints = []
 
       if (entry.expected.name !== entry.actual.name) {
@@ -83,17 +84,17 @@ function lintDiff (file, diff) {
       const reason = `Label \`${entry.expected.name}\` ${hint}`
 
       file.message(reason, null, 'attend-github-labels:no-difference').fatal = true
-		} else if (entry.type === 'added') {
+    } else if (entry.type === 'added') {
       file.message(`Label \`${entry.name}\` is extraneous`, null, 'attend-github-labels:no-extraneous')
-		} else {
+    } else {
       file.message(`Unknown diff type \`${entry.type}\``, null).fatal = true
     }
-	}
+  }
 }
 
 function mergePreset (preset) {
   if (!Array.isArray(preset)) {
-    throw new ExpectedError(`Preset must be an array`)
+    throw new ExpectedError('Preset must be an array')
   }
 
   const map = new Map()

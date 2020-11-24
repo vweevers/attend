@@ -247,7 +247,7 @@ async function check ({ cwd, bump, bare, only, ignore }) {
           fatal: true,
           fixable: true,
           reason: `Wants \`${id} ${item.packageWanted}\`, has \`${item.installed}\``,
-          ruleId:  'no-mismatch'
+          ruleId: 'no-mismatch'
         })
       } else if (!item.semverValid) {
         item.fix = item.fix || installFix(item)
