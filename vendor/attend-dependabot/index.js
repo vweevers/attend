@@ -234,6 +234,13 @@ function isFatal (msg) {
 function guessDesiredIgnore (cwd, project, ecosystem, file, desiredIgnore, currentIgnore, files) {
   const ignore = []
 
+  function alreadyIgnored (id) {
+    return (
+      desiredIgnore.includes(id) ||
+      currentIgnore.some(dep => dep && dep['dependency-name'] === id)
+    )
+  }
+
   if (ecosystem === 'npm') {
     // Reuse info gathered by attend-npm-dependencies
     if (project.packages && project.packages.npm) {
@@ -241,11 +248,10 @@ function guessDesiredIgnore (cwd, project, ecosystem, file, desiredIgnore, curre
         if (item.ignoreUpdates) {
           ignore.push(item.id)
 
-          // TODO: refactor
-          if (!desiredIgnore.includes(item.id) && !currentIgnore.some(dep => dep && dep['dependency-name'] === item.id)) {
+          if (!alreadyIgnored(item.id)) {
             file.info(`Ignoring \`${item.id}\` in \`${ecosystem}\``, null, 'attend-dependabot:ignore')
           }
-        } else if (item.outdated) {
+        } else if (item.outdated && !alreadyIgnored(item.id)) {
           file.message(
             `Dependabot will want to bump \`${item.id}\` in \`${ecosystem}\``,
             null,
