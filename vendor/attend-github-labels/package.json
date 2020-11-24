@@ -1,0 +1,14 @@
+{
+  "name": "attend-github-labels",
+  "version": "0.0.0",
+  "description": "Attend plugin to sync GitHub repository labels with a preset",
+  "private": true,
+  "dependencies": {
+    "github-label-sync": "^2.0.0",
+    "parse-github-url": "^1.0.2",
+    "vfile": "^4.2.0"
+  },
+  "engines": {
+    "node": ">=12"
+  }
+}

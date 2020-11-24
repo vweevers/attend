@@ -11,6 +11,7 @@
   "dependencies": {
     "@octokit/core": "^3.2.1",
     "attend-dependabot": "file:vendor/attend-dependabot",
+    "attend-github-labels": "file:vendor/attend-github-labels",
     "attend-hallmark": "file:vendor/attend-hallmark",
     "attend-npm-dependencies": "file:vendor/attend-npm-dependencies",
     "attend-npm-initial-install": "file:vendor/attend-npm-initial-install",
@@ -23,6 +24,7 @@
     "vfile": "^4.2.0"
   },
   "devDependencies": {
+    "github-label-preset": "^1.0.0",
     "standard": "^16.0.2"
   },
   "repository": {

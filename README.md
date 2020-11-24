@@ -105,7 +105,7 @@ main()
       - if dirty: not ok
       - if `git fetch` fails: error
       - if `git diff --shortstat <branch> origin/<branch>` has output: not ok
-    - [ ] `attend-github-labels` (with preset)
+    - [x] `attend-github-labels` (sync labels with a preset)
     - [ ] `attend-github-access`
     - [ ] `attend-github-branch-protection`
     - [ ] `attend-github-stale-issues`
