@@ -32,6 +32,14 @@
     "url": "https://github.com/vweevers/attend.git"
   },
   "homepage": "https://github.com/vweevers/attend",
+  "standard": {
+    "noDefaultIgnore": true,
+    "ignore": [
+      "*.min.js",
+      "coverage/",
+      "node_modules/"
+    ]
+  },
   "keywords": [
     "attend",
     "maintenance",
