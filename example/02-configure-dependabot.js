@@ -2,33 +2,32 @@
 
 const attend = require('..')
 
-const opts = {
-  filter: {
-    isFork: false,
-    isPrivate: false
-  },
-  ignore: [
-    // Exclude repositores by name or slug
-    'awesome',
-    'Level/leveldown-mobile',
-    'Level/leveldown-hyper',
-    'Level/level-fstream',
-    'Level/level-hyper',
-    'Level/level-ttl',
-    'Level/rocksdb'
-  ],
-  clone: {
-    depth: 1,
-    // Only checkout files in the root and these subdirectories
-    sparse: ['.github', '.github/workflows']
-  }
-}
-
 const suite = attend()
-  // Clone all repositories of github orgs
-  .use(require('attend-org-projects'), { org: 'Level', ...opts })
-  .use(require('attend-org-projects'), { org: 'airtap', ...opts })
+  // Shallowly clone all repositories of github orgs
+  .use(require('attend-org-projects'), {
+    org: ['Level', 'airtap'],
+    filter: {
+      isFork: false,
+      isPrivate: false
+    },
+    ignore: [
+      // Exclude repositores by name or slug
+      'awesome',
+      'Level/leveldown-mobile',
+      'Level/leveldown-hyper',
+      'Level/level-fstream',
+      'Level/level-hyper',
+      'Level/level-ttl'
+    ],
+    clone: {
+      depth: 1,
+      // Only checkout files in the root and these subdirectories
+      sparse: ['.github', '.github/workflows']
+    }
+  })
+  // Collect dependency information for attend-dependabot
   .use(require('attend-npm-dependencies'))
+  // Create or update dependabot.yml
   .use(require('attend-dependabot'), {
     interval: 'monthly',
     npm: {
