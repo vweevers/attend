@@ -5,13 +5,47 @@ const Octokit = require('@octokit/core').Octokit
 const throttling = require('@octokit/plugin-throttling').throttling
 const uniq = require('uniq')
 
-module.exports = function (options) {
+module.exports = function factory (options) {
   if (typeof options !== 'object' || options === null) {
-    throw new TypeError('Options must be an object or string shorthand')
-  } else if ((!options.org && !options.user) || (options.org && options.user)) {
+    throw new TypeError('Options must be an object')
+  }
+
+  if (Array.isArray(options.org) || Array.isArray(options.user) || (options.org && options.user)) {
+    const { org, user, ...rest } = options
+    const seen = new Set()
+    const plugins = []
+
+    for (const k of ['org', 'user']) {
+      for (const login of [].concat(options[k] || [])) {
+        if (!login || typeof login !== 'string') {
+          throw new TypeError(`Nested ${k} must be a string`)
+        } else if (seen.has(login)) {
+          throw new Error(`Duplicate ${k}`)
+        }
+
+        seen.add(login)
+        plugins.push(factory({ ...rest, [k]: login }))
+      }
+    }
+
+    return {
+      async projects () {
+        const all = []
+
+        for (const plugin of plugins) {
+          const projects = await plugin.projects()
+          all.push(...projects)
+        }
+
+        return all
+      }
+    }
+  }
+
+  if ((!options.org && !options.user) || (options.org && options.user)) {
     throw new Error('Must provide either an org or user')
   } else if (typeof (options.org || options.user) !== 'string') {
-    throw new TypeError('Org or user must be a string')
+    throw new TypeError('Org or user must be a string or array')
   } else if (!/^[a-z0-9-_.]+$/i.test(options.org || options.user)) {
     throw new Error('Org or user is invalid')
   }
