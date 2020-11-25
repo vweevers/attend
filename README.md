@@ -67,6 +67,7 @@ main()
 ## Ideas
 
 - features:
+  - [ ] refactor helpers (branch/commit/pr) into plugins
   - [ ] `attend-repl-input` (take input for init steps)
   - [ ] `attend-cli` (wrap plugin in cli)
   - [ ] run in github actions, (auto-?)convert reports to status check annotations
@@ -79,8 +80,6 @@ main()
     - [ ] Amend previous commit if message is the same (and ours)
   - [x] `pr(title)`
     - [ ] Add rc for github token
-  - [ ] `rebase()`
-  - [ ] `execFile()` and `exec()`
 - projects:
   - [x] `attend-project-clone` (clone github repo by slug)
   - [x] `attend-org-projects` (clone all github repos from org or user)
@@ -116,6 +115,7 @@ main()
     - [ ] `attend-git-stale-branches`
     - [ ] `attend-git-branch-mergeable`
     - [ ] `attend-git-main` (rename master to main)
+    - [ ] `attend-git-rebase`
   - markdown:
     - [x] `attend-hallmark`
   - ci:
