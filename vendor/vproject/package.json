@@ -1,0 +1,8 @@
+{
+  "name": "vproject",
+  "version": "0.0.0",
+  "description": "Virtual project",
+  "private": true,
+  "dependencies": {
+  }
+}

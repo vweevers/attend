@@ -20,12 +20,15 @@
     "attend-project-clone": "file:vendor/attend-project-clone",
     "attend-reporter": "file:vendor/attend-reporter",
     "attend-standard": "file:vendor/attend-standard",
-    "parse-github-url": "^1.0.2",
-    "vfile": "^4.2.0"
+    "git-host": "file:vendor/git-host",
+    "is-git-branch-name-valid": "^1.0.1",
+    "vfile": "^4.2.0",
+    "vproject": "file:vendor/vproject"
   },
   "devDependencies": {
     "github-label-preset": "^1.0.0",
-    "standard": "^16.0.2"
+    "standard": "^16.0.2",
+    "tape": "^5.0.1"
   },
   "repository": {
     "type": "git",

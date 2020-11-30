@@ -1,12 +1,10 @@
 'use strict'
 
 const vfile = require('vfile')
-const gh = require('parse-github-url')
 const Octokit = require('@octokit/core').Octokit
+const validBranch = require('is-git-branch-name-valid')
 const promisify = require('util').promisify
 const execFile = promisify(require('child_process').execFile)
-const path = require('path')
-const fs = require('fs')
 
 const headBranchRe = /^\s*HEAD branch:/i
 const homepage = require('./package.json').homepage
@@ -16,15 +14,16 @@ exports.branch = async function (project, name) {
     throw new ExpectedError('Branch name must be a string')
   }
 
-  if (!/^[a-z0-9/.\-_]+$/i.test(name)) {
-    throw new ExpectedError(`Branch name "${name}" is invalid`)
+  if (!validBranch(name)) {
+    const json = JSON.stringify(name)
+    throw new ExpectedError(`Name ${json} must be a valid git branch name`)
   }
 
   const cwd = project.cwd
   const current = await currentBranch(cwd)
 
   if (current !== name) {
-    const def = project.defaultBranch || (await defaultBranch(cwd)) || 'main'
+    const def = project.githost.defaultBranch || (await defaultBranch(cwd)) || 'main'
 
     if (name === def) {
       await execFile('git', ['checkout', name], { cwd })
@@ -72,12 +71,16 @@ exports.pr = async function (project, title) {
   }
 
   const { cwd } = project
-  const { owner, name } = ghrepo(cwd)
+  const { type, owner, name, defaultBranch } = project.githost
+
+  if (type !== 'github') {
+    throw new ExpectedError(`Unsupported git host ${JSON.stringify(type)}`)
+  }
 
   // Base: the name of the branch you want the changes pulled into
   // Head: the name of the branch where your changes are implemented
   const octokit = new Octokit({ auth: token })
-  const base = project.defaultBranch || (await defaultBranchQuery(octokit, owner, name))
+  const base = defaultBranch || (await defaultBranchQuery(octokit, owner, name))
   const head = await currentBranch(cwd)
 
   if (!head) {
@@ -192,19 +195,6 @@ async function currentBranch (cwd) {
   const result = await execFile('git', args, { cwd })
 
   return result.stdout.trim()
-}
-
-function ghrepo (cwd) {
-  const fp = path.join(cwd, 'package.json')
-  const pkg = JSON.parse(fs.readFileSync(fp, 'utf8'))
-  const repository = pkg.repository || {}
-  const parsed = gh(repository.url || repository)
-
-  if (!parsed) {
-    throw new ExpectedError('Unable to determine GitHub owner and name')
-  }
-
-  return parsed
 }
 
 class ExpectedError extends Error {

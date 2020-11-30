@@ -412,12 +412,12 @@ function readPackage (cwd) {
 // now. Could also consider refactoring out the check() function and then using
 // in-memory caching to achieve the same result without tight coupling.
 function exposePackages (project, packages) {
-  if (project.packages == null) {
-    project.packages = {}
+  if (project.data.packages == null) {
+    project.data.packages = {}
   }
 
   // Group by ecosystem like dependabot
-  project.packages.npm = packages.map(function (pkg) {
+  project.data.packages.npm = packages.map(function (pkg) {
     return {
       ...pkg,
 

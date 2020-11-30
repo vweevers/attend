@@ -197,7 +197,8 @@ async function guessDesiredEcosystems (cwd, project) {
     desiredEcosystems.add('gitsubmodule')
   }
 
-  if (project.languages && project.languages.includes('Dockerfile')) {
+  // Reuse info exposed by attend-org-projects
+  if (project.data.languages && project.data.languages.includes('Dockerfile')) {
     desiredEcosystems.add('docker')
   } else if (await hasFileShallow(cwd, 'Dockerfile')) {
     desiredEcosystems.add('docker')
@@ -243,8 +244,8 @@ function guessDesiredIgnore (cwd, project, ecosystem, file, desiredIgnore, curre
 
   if (ecosystem === 'npm') {
     // Reuse info gathered by attend-npm-dependencies
-    if (project.packages && project.packages.npm) {
-      for (const item of project.packages.npm) {
+    if (project.data.packages && project.data.packages.npm) {
+      for (const item of project.data.packages.npm) {
         if (item.ignoreUpdates) {
           ignore.push(item.id)
 

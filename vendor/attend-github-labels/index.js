@@ -2,9 +2,6 @@
 
 const vfile = require('vfile')
 const githubLabelSync = require('github-label-sync')
-const gh = require('parse-github-url')
-const path = require('path')
-const fs = require('fs')
 
 module.exports = function (options) {
   if (Array.isArray(options)) {
@@ -33,10 +30,17 @@ module.exports = function (options) {
   async function run (project, fix) {
     const cwd = project.cwd
     const file = vfile({ path: '.', cwd })
+    const githost = project.githost
+
+    if (githost.type !== 'github') {
+      const rule = 'attend-github-labels:git-host'
+      file.info(`Skipping git host \`${githost.type}\``, null, rule)
+      return { files: [file] }
+    }
 
     try {
       const diff = await githubLabelSync({
-        repo: project.slug || ghslug(cwd),
+        repo: githost.slug(),
         accessToken: token,
         labels,
         // In lint mode, warn about extra labels. Don't remove them in fix mode
@@ -115,24 +119,6 @@ function mergePreset (preset) {
   }
 
   return Array.from(map.values())
-}
-
-function ghslug (cwd) {
-  const { owner, name } = ghrepo(cwd)
-  return `${owner}/${name}`
-}
-
-function ghrepo (cwd) {
-  const fp = path.join(cwd, 'package.json')
-  const pkg = JSON.parse(fs.readFileSync(fp, 'utf8'))
-  const repository = pkg.repository || {}
-  const parsed = gh(repository.url || repository)
-
-  if (!parsed) {
-    throw new ExpectedError('Unable to determine GitHub owner and name')
-  }
-
-  return parsed
 }
 
 class ExpectedError extends Error {

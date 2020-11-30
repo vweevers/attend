@@ -13,18 +13,18 @@ exports.init = async function () {
   // TODO: add hallmark to package.json (with script?)
 }
 
-exports.lint = async function (options) {
-  return wrapHallmark(requireHallmark(options.cwd)).lint({
+exports.lint = async function (project) {
+  return wrapHallmark(requireHallmark(project.cwd)).lint({
     // TODO: support disabling reporter in hallmark
     report: { _: [function noop () {}] },
-    ...options
+    repository: project.githost.https()
   })
 }
 
-exports.fix = async function (options) {
-  return wrapHallmark(requireHallmark(options.cwd)).fix({
+exports.fix = async function (project) {
+  return wrapHallmark(requireHallmark(project.cwd)).fix({
     report: { _: [function noop () {}] },
-    ...options
+    repository: project.githost.https()
   })
 }
 

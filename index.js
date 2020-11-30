@@ -2,8 +2,8 @@
 
 const vfile = require('vfile')
 const reporter = require('attend-reporter')
+const VProject = require('vproject')
 const EventEmitter = require('events')
-const path = require('path')
 const helpers = require('./helpers')
 
 const kPlugins = Symbol('kPlugins')
@@ -59,7 +59,7 @@ class Suite extends EventEmitter {
     }
 
     if (defaultProject) {
-      projects.push(new LocalProject('.'))
+      projects.push(new VProject({ cwd: '.' }))
     }
 
     let passed = projects.length
@@ -205,6 +205,7 @@ function Subs () {
 }
 
 function errorResult (err, project, origin) {
+  // TODO: vfile supports a .stack property, use that
   const file = vfile({ path: '.', cwd: project.cwd })
   const reason = String(err.expected ? err.message || err : err.stack || err)
   const message = file.message(reason, null, origin)
@@ -247,10 +248,4 @@ function validateProject (project) {
   }
 
   return project
-}
-
-class LocalProject {
-  constructor (cwd) {
-    this.cwd = path.resolve(cwd)
-  }
 }

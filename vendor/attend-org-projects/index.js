@@ -145,9 +145,13 @@ module.exports = function factory (options) {
       function map (repository) {
         return new ProjectClone({
           ...options.clone,
-          slug: `${login}/${repository.name}`,
-          defaultBranch: repository.defaultBranchRef.name,
-          languages: repository.languages.nodes.map(lang => lang.name)
+          githost: {
+            url: `github:${login}/${repository.name}`,
+            defaultBranch: repository.defaultBranchRef.name
+          },
+          data: {
+            languages: repository.languages.nodes.map(lang => lang.name)
+          }
         })
       }
     }

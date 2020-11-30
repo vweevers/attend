@@ -4,11 +4,9 @@ const chalk = require('chalk')
 const bytes = require('bytes')
 const reporter = require('vfile-reporter-shiny')
 const ansiDiff = require('ansi-diff')
-const fs = require('fs')
 const path = require('path')
 
 exports.report = function (suite) {
-  const nameCache = new Map()
   const verbose = !!process.env.CI
   const diff = ansiDiff({ width: process.stdout.columns })
   const headerPre = chalk.grey('| ')
@@ -119,21 +117,10 @@ exports.report = function (suite) {
   })
 
   function header (project, ...extra) {
-    const name = project ? getName(project.cwd) : null
+    const name = project.name || '(anonymous)'
     const arr = [name, ...extra].filter(Boolean)
 
     return arr.length > 0 ? headerPre + arr.join(headerSep) : ''
-  }
-
-  function getName (cwd) {
-    let name = nameCache.get(cwd)
-
-    if (name == null) {
-      name = packageName(cwd) || path.basename(cwd)
-      nameCache.set(cwd, name)
-    }
-
-    return name
   }
 }
 
@@ -152,15 +139,6 @@ function describeSubprocess (subprocess) {
   }
 
   return [file, ...args].join(' ')
-}
-
-function packageName (cwd) {
-  try {
-    const fp = path.join(cwd, 'package.json')
-    const json = fs.readFileSync(fp, 'utf8')
-
-    return JSON.parse(json).name
-  } catch {}
 }
 
 function hasFatal (file) {
