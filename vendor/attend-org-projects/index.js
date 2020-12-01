@@ -64,6 +64,8 @@ module.exports = function factory (options) {
   const octokit = octo({ auth: token })
   const order = 'orderBy: { field: NAME, direction: ASC }'
   const q = ['first: 100', 'after: $cursor', order]
+  const gitObjectQueries = []
+  const gitObjectAliases = []
 
   if (filter.isPrivate != null) {
     q.push(`privacy: ${filter.isPrivate ? 'PRIVATE' : 'PUBLIC'}`)
@@ -76,6 +78,19 @@ module.exports = function factory (options) {
   if (object === 'user') {
     // Only include repositories that the current viewer owns
     q.push('affiliations: OWNER')
+  }
+
+  // Exclude by presence of files
+  for (const filename of ([].concat(filter.hasFile || []))) {
+    // TODO: use variables
+    if (!/^[a-z\d.\-_]+$/i.test(filename)) {
+      throw new ExpectedError(`Unsafe filename ${JSON.stringify(filename)}`)
+    }
+
+    const alias = `att_file${gitObjectQueries.length}`
+
+    gitObjectQueries.push(`${alias}:object(expression: "HEAD:${filename}") { ... on Blob { id } }`)
+    gitObjectAliases.push(alias)
   }
 
   return {
@@ -98,6 +113,7 @@ module.exports = function factory (options) {
                   languages(first: 3, orderBy: { field: SIZE, direction: DESC }) {
                     nodes { name }
                   }
+                  ${gitObjectQueries.join('\n')}
                 }
               }
             }
@@ -137,6 +153,11 @@ module.exports = function factory (options) {
           return false
         } else if (repository.name === '.github') {
           return false
+        }
+
+        // Exclude by presence of files
+        for (const alias of gitObjectAliases) {
+          if (repository[alias] == null) return false
         }
 
         return true
