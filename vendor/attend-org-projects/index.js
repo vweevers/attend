@@ -4,6 +4,9 @@ const ProjectClone = require('../attend-project-clone').ProjectClone
 const Octokit = require('@octokit/core').Octokit
 const throttling = require('@octokit/plugin-throttling').throttling
 const uniq = require('uniq')
+const path = require('path')
+const fs = require('fs')
+const root = process.cwd()
 
 module.exports = function factory (options) {
   if (typeof options !== 'object' || options === null) {
@@ -55,6 +58,15 @@ module.exports = function factory (options) {
   const object = options.org ? 'organization' : 'user'
   const ignore = (options.ignore || []).map(s => s.toLowerCase())
   const filter = { isArchived: false, isEmpty: false, isFork: false, ...options.filter }
+  const cacheKey = options.cache || null
+
+  if (cacheKey) {
+    if (typeof cacheKey !== 'string') {
+      throw new ExpectedError('The "cache" option must be a string')
+    } else if (!/^[a-z\d]+$/.test(cacheKey)) {
+      throw new ExpectedError('The "cache" option must be alphanumeric')
+    }
+  }
 
   if (!token) {
     const hint = 'required scopes: public_repo or repo'
@@ -95,41 +107,53 @@ module.exports = function factory (options) {
 
   return {
     async projects () {
+      // TODO: cache by signature of options
+      const cachePath = cacheKey ? path.join(root, '.attend', '.org-projects', cacheKey) : null
       const repositories = []
 
-      for (let i = 0, cursor = null; i < 10; i++) {
-        const data = await octokit.graphql(
-          `query ($login: String!, $cursor: String) {
-            ${object}(login: $login) {
-              repositories(${q.join(', ')}) {
-                pageInfo { endCursor, hasNextPage }
-                nodes {
-                  defaultBranchRef { name }
-                  name
-                  nameWithOwner
-                  isArchived
-                  isEmpty
-                  pushedAt
-                  languages(first: 3, orderBy: { field: SIZE, direction: DESC }) {
-                    nodes { name }
+      if (cachePath && fs.existsSync(cachePath)) {
+        const cached = JSON.parse(fs.readFileSync(cachePath, 'utf8'))
+        repositories.push(...cached)
+      } else {
+        for (let i = 0, cursor = null; i < 10; i++) {
+          const data = await octokit.graphql(
+            `query ($login: String!, $cursor: String) {
+              ${object}(login: $login) {
+                repositories(${q.join(', ')}) {
+                  pageInfo { endCursor, hasNextPage }
+                  nodes {
+                    defaultBranchRef { name }
+                    name
+                    nameWithOwner
+                    isArchived
+                    isEmpty
+                    pushedAt
+                    languages(first: 3, orderBy: { field: SIZE, direction: DESC }) {
+                      nodes { name }
+                    }
+                    ${gitObjectQueries.join('\n')}
                   }
-                  ${gitObjectQueries.join('\n')}
                 }
               }
-            }
-          }`,
-          { login, cursor }
-        )
+            }`,
+            { login, cursor }
+          )
 
-        repositories.push(...data[object].repositories.nodes.filter(include))
-        cursor = data[object].repositories.pageInfo.endCursor
+          repositories.push(...data[object].repositories.nodes)
+          cursor = data[object].repositories.pageInfo.endCursor
 
-        if (!data[object].repositories.pageInfo.hasNextPage) {
-          break
+          if (!data[object].repositories.pageInfo.hasNextPage) {
+            break
+          }
+        }
+
+        if (cachePath) {
+          fs.mkdirSync(path.dirname(cachePath), { recursive: true })
+          fs.writeFileSync(cachePath, JSON.stringify(repositories, null, 2))
         }
       }
 
-      return uniq(repositories, cmpName).map(map)
+      return uniq(repositories.filter(include), cmpName).map(map)
 
       function include (repository) {
         // Exclude repositories that were transferred to another owner
