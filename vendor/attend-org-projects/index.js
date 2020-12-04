@@ -64,7 +64,7 @@ module.exports = function factory (options) {
   if (cacheKey) {
     if (typeof cacheKey !== 'string') {
       throw new ExpectedError('The "cache" option must be a string')
-    } else if (!/^[a-z\d]+$/.test(cacheKey)) {
+    } else if (!/^[a-z\d\-_]+$/.test(cacheKey)) {
       throw new ExpectedError('The "cache" option must be alphanumeric')
     }
   }
