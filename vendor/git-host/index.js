@@ -11,9 +11,12 @@ const fs = require('fs')
 
 const kShell = Symbol('shell')
 const kNut = Symbol('nut')
+const kRaw = Symbol('raw')
+const kFormat = Symbol('format')
 const kIsGithost = Symbol.for('githost.is')
 const kGithostOptions = Symbol.for('githost.options')
 const inspect = Symbol.for('nodejs.util.inspect.custom')
+const formats = new Set(['shortcut', 'slug', 'https', 'ssh', 'sshurl'])
 
 exports.fromUrl = function (url, options) {
   options = getOptions(options)
@@ -109,6 +112,8 @@ exports.from = function (value, options) {
   }
 }
 
+exports.formats = Array.from(formats)
+
 function fromOptions (value, options) {
   const { url, pkg, cwd, ...rest } = value
   return { ...rest, ...options }
@@ -134,15 +139,21 @@ function parse (url, options) {
   }
 
   if (nut[kShell] == null) {
-    definePrivate(nut, kShell, new GitHost(nut, options))
+    definePrivate(nut, kShell, new GitHost(url, nut, options))
   }
 
   return nut[kShell]
 }
 
+function getFormat (url, nut) {
+  return url === `${nut.user}/${nut.project}` ? 'slug' : nut.default || 'ssh'
+}
+
 class GitHost {
-  constructor (nut, options) {
+  constructor (url, nut, options) {
+    definePrivate(this, kRaw, url)
     definePrivate(this, kNut, nut)
+    definePrivate(this, kFormat, getFormat(url, nut))
     definePrivate(this, kIsGithost, true)
     definePrivate(this, kGithostOptions, options)
 
@@ -153,6 +164,14 @@ class GitHost {
     this.defaultBranch = options.defaultBranch
       ? assertBranch(options.defaultBranch)
       : null
+  }
+
+  get raw () {
+    return this[kRaw]
+  }
+
+  get format () {
+    return this[kFormat]
   }
 
   file (path, opts) {
@@ -220,6 +239,12 @@ class GitHost {
     })
   }
 
+  sshurl (opts) {
+    return this[kNut].sshurl({
+      committish: optionalCommittish(this, opts)
+    })
+  }
+
   tarball (opts) {
     return this[kNut].tarball({
       committish: requireCommittish(this, opts)
@@ -227,9 +252,14 @@ class GitHost {
   }
 
   toString (opts) {
-    return this[kNut][this[kNut].default || 'ssh']({
-      committish: optionalCommittish(this, opts)
-    })
+    const format = (opts && opts.format) || this.format
+
+    if (!formats.has(format)) {
+      const hint = Array.from(formats).map(s => JSON.stringify(s)).join(', ')
+      throw new Error('The "format" option must be one of ' + hint)
+    }
+
+    return this[format](opts)
   }
 
   [inspect] (depth, options) {
