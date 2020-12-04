@@ -16,7 +16,7 @@ const kFormat = Symbol('format')
 const kIsGithost = Symbol.for('githost.is')
 const kGithostOptions = Symbol.for('githost.options')
 const inspect = Symbol.for('nodejs.util.inspect.custom')
-const formats = new Set(['shortcut', 'slug', 'https', 'ssh', 'sshurl'])
+const formats = new Set(['shortcut', 'slug', 'https', 'ssh', 'sshurl', 'git'])
 
 exports.fromUrl = function (url, options) {
   options = getOptions(options)
@@ -245,6 +245,10 @@ class GitHost {
     })
   }
 
+  git (opts) {
+    return this.https(opts).replace(/^(git\+)?https:/, 'git:')
+  }
+
   tarball (opts) {
     return this[kNut].tarball({
       committish: requireCommittish(this, opts)
@@ -255,8 +259,10 @@ class GitHost {
     const format = (opts && opts.format) || this.format
 
     if (!formats.has(format)) {
-      const hint = Array.from(formats).map(s => JSON.stringify(s)).join(', ')
-      throw new Error('The "format" option must be one of ' + hint)
+      const expected = Array.from(formats).map(s => JSON.stringify(s)).join(', ')
+      const actual = JSON.stringify(format)
+
+      throw new Error('The "format" option must be one of ' + expected + ', got ' + actual)
     }
 
     return this[format](opts)
