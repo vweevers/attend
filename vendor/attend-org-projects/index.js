@@ -57,6 +57,7 @@ module.exports = function factory (options) {
   const login = options.org || options.user
   const object = options.org ? 'organization' : 'user'
   const ignore = (options.ignore || []).map(s => s.toLowerCase())
+  const only = (options.only || []).map(s => s.toLowerCase())
   const filter = { isArchived: false, isEmpty: false, isFork: false, ...options.filter }
   const cacheKey = options.cache || null
 
@@ -170,12 +171,15 @@ module.exports = function factory (options) {
           return false
         }
 
+        const ln = repository.name.toLowerCase()
+        const ls = repository.nameWithOwner.toLowerCase()
+
         // Exclude by name
-        if (ignore.length && ignore.includes(repository.name.toLowerCase())) {
-          return false
-        } else if (ignore.length && ignore.includes((`${login}/${repository.name}`).toLowerCase())) {
+        if (ignore.length && (ignore.includes(ln) || ignore.includes(ls))) {
           return false
         } else if (repository.name === '.github') {
+          return false
+        } else if (only.length && !(only.includes(ln) || only.includes(ls))) {
           return false
         }
 
