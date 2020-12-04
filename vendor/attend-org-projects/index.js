@@ -14,7 +14,7 @@ module.exports = function factory (options) {
   }
 
   if (Array.isArray(options.org) || Array.isArray(options.user) || (options.org && options.user)) {
-    const { org, user, ...rest } = options
+    const { org, user, cache, ...rest } = options
     const seen = new Set()
     const plugins = []
 
@@ -26,8 +26,10 @@ module.exports = function factory (options) {
           throw new Error(`Duplicate ${k}`)
         }
 
+        const cacheKey = cache ? [cache, k, login].join('-').toLowerCase() : null
+
         seen.add(login)
-        plugins.push(factory({ ...rest, [k]: login }))
+        plugins.push(factory({ ...rest, cache: cacheKey, [k]: login }))
       }
     }
 
@@ -65,8 +67,10 @@ module.exports = function factory (options) {
   if (cacheKey) {
     if (typeof cacheKey !== 'string') {
       throw new ExpectedError('The "cache" option must be a string')
-    } else if (!/^[a-z\d\-_]+$/.test(cacheKey)) {
-      throw new ExpectedError('The "cache" option must be alphanumeric')
+    } else if (!/^[a-z\d\-_\.]+$/.test(cacheKey)) {
+      throw new ExpectedError('The "cache" option contains illegal characters')
+    } else if (/^\.|\.{2,}|\.$/.test(cacheKey)) {
+      throw new ExpectedError('The "cache" option contains illegal sequence')
     }
   }
 
