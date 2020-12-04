@@ -57,9 +57,18 @@ exports.commit = async function (project, message) {
   await execFile('git', ['commit', '-m', message], { cwd: project.cwd })
 }
 
-exports.pr = async function (project, title) {
+exports.pr = async function (project, options) {
+  if (typeof options === 'string') {
+    options = { title: options }
+  }
+
+  const title = options.title
+  const body = options.body || `This is an automated pull request created with [Attend](${homepage}).`
+
   if (typeof title !== 'string' || title.trim() === '') {
-    throw new ExpectedError('Pull Request title must be a string')
+    throw new ExpectedError('Pull Request title must be a non-empty string')
+  } else if (typeof body !== 'string' || body.trim() === '') {
+    throw new ExpectedError('Pull Request body must be a non-empty string')
   }
 
   // TODO: rc
@@ -124,7 +133,6 @@ exports.pr = async function (project, title) {
   await execFile('git', ['push', '--set-upstream', 'origin', head], { cwd })
 
   if (!pr) {
-    const body = `This is an automated pull request created with [Attend](${homepage}).`
     const variables = { repositoryId: repository.id, base, head, title, body }
 
     const { createPullRequest } = await octokit.graphql(
