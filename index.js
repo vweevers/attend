@@ -82,11 +82,13 @@ class Suite extends EventEmitter {
             const ret = await this[kStep](project, name, work, plugin)
             const result = ret ? { ...ret, project } : { files: [], project }
 
+            // Stop project on warnings if frail is true
+            result.passed = !result.files.some(result.frail ? hasWarningOrFatal : hasFatal)
+
             // For consistency always emit result even if empty
             this.emit('result', result)
 
-            // Stop project on warnings if frail is true
-            if (result.files.some(result.frail ? hasWarningOrFatal : hasFatal)) {
+            if (!result.passed) {
               passed--
               break
             }
@@ -212,7 +214,7 @@ function errorResult (err, project, origin) {
 
   message.fatal = true
 
-  return { files: [file], project }
+  return { files: [file], project, passed: false }
 }
 
 async function openProject (project) {

@@ -5,6 +5,8 @@ const bytes = require('bytes')
 const reporter = require('vfile-reporter-shiny')
 const ansiDiff = require('ansi-diff')
 const path = require('path')
+const fs = require('fs')
+const root = process.cwd()
 
 exports.report = function (suite) {
   const verbose = !!process.env.CI
@@ -12,6 +14,7 @@ exports.report = function (suite) {
   const headerPre = chalk.grey('| ')
   const headerSep = chalk.grey(' | ')
   const buffer = []
+  const failedProjects = new Set()
 
   let lastLine = ''
   let lastWrite = 0
@@ -88,7 +91,12 @@ exports.report = function (suite) {
   })
 
   suite.on('result', function (result) {
-    const report = reporter(result.files, { quiet: !verbose, cwd: result.project.cwd })
+    const cwd = result.project.cwd
+    const report = reporter(result.files, { quiet: !verbose, cwd })
+
+    if (!result.passed) {
+      failedProjects.add(cwd)
+    }
 
     if (report) {
       clearStatus()
@@ -113,6 +121,16 @@ exports.report = function (suite) {
       console.log()
       console.log(chalk.green(`  ${passed} projects passed`))
       console.log(chalk[failed ? 'red' : 'grey'](`  ${failed} projects failed`))
+
+      const dir = path.join(root, '.attend', '.report')
+      const fp = path.join(dir, 'failed-projects')
+
+      if (failedProjects.size > 0) {
+        fs.mkdirSync(dir, { recursive: true })
+        fs.writeFileSync(fp, Array.from(failedProjects).join('\n') + '\n')
+      } else {
+        unlink(fp)
+      }
     }
   })
 
@@ -121,6 +139,14 @@ exports.report = function (suite) {
     const arr = [name, ...extra].filter(Boolean)
 
     return arr.length > 0 ? headerPre + arr.join(headerSep) : ''
+  }
+}
+
+function unlink (fp) {
+  try {
+    fs.unlinkSync(fp)
+  } catch (err) {
+    if (err.code !== 'ENOENT') throw err
   }
 }
 
