@@ -60,6 +60,7 @@ module.exports = function factory (options) {
   const only = (options.only || []).map(s => s.toLowerCase())
   const filter = { isArchived: false, isEmpty: false, isFork: false, ...options.filter }
   const cacheKey = options.cache || null
+  const limit = options.limit == null ? Infinity : options.limit
 
   if (cacheKey) {
     if (typeof cacheKey !== 'string') {
@@ -67,6 +68,10 @@ module.exports = function factory (options) {
     } else if (!/^[a-z\d\-_]+$/.test(cacheKey)) {
       throw new ExpectedError('The "cache" option must be alphanumeric')
     }
+  }
+
+  if (typeof limit !== 'number' || limit < 0) {
+    throw new ExpectedError('The "limit" option must be a number >= 0 <= Infinity')
   }
 
   if (!token) {
@@ -154,7 +159,10 @@ module.exports = function factory (options) {
         }
       }
 
-      return uniq(repositories.filter(include), cmpName).map(map)
+      const included = uniq(repositories.filter(include), cmpName)
+      const sliced = limit < Infinity ? included.slice(0, limit) : included
+
+      return sliced.map(map)
 
       function include (repository) {
         // Exclude repositories that were transferred to another owner
