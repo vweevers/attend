@@ -191,6 +191,11 @@ class GitHost {
   }
 
   slug () {
+    if (this.type !== 'github') {
+      const json = JSON.stringify(this.type)
+      throw new Error(`The slug format is not supported on type ${json}`)
+    }
+
     return `${this.owner}/${this.name}`
   }
 
