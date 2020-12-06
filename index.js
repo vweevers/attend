@@ -4,6 +4,8 @@ const vfile = require('vfile')
 const reporter = require('attend-reporter')
 const VProject = require('vproject')
 const EventEmitter = require('events')
+const path = require('path')
+const fsp = require('fs').promises
 const helpers = require('./helpers')
 
 const kPlugins = Symbol('kPlugins')
@@ -61,6 +63,9 @@ class Suite extends EventEmitter {
     if (defaultProject) {
       projects.push(new VProject({ cwd: '.' }))
     }
+
+    await fsp.mkdir(path.join(original, '.attend'), { recursive: true })
+    await fsp.writeFile(path.join(original, '.attend', '.gitignore'), '*')
 
     let passed = projects.length
 
