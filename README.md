@@ -89,6 +89,7 @@ main()
     - [x] `attend-npm-dependencies` (wrap `npm-check`)
     - [x] `attend-npm-test`
     - [ ] `attend-npm-package` (create new package, lint and fix it)
+      - [x] `attend-npm-repository`
       - [ ] `attend-npm-package-license` (create license)
       - [ ] `attend-npm-package-readme` (create readme)
     - [ ] `attend-npm-package-sort` (sort deps etc)

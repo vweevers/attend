@@ -15,6 +15,7 @@
     "attend-hallmark": "file:vendor/attend-hallmark",
     "attend-npm-dependencies": "file:vendor/attend-npm-dependencies",
     "attend-npm-initial-install": "file:vendor/attend-npm-initial-install",
+    "attend-npm-repository": "file:vendor/attend-npm-repository",
     "attend-npm-test": "file:vendor/attend-npm-test",
     "attend-org-projects": "file:vendor/attend-org-projects",
     "attend-project-clone": "file:vendor/attend-project-clone",
