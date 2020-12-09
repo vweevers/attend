@@ -1,0 +1,8 @@
+{
+  "name": "attend-local-projects",
+  "version": "0.0.0",
+  "description": "Attend plugin to run Attend on repositories in a directory",
+  "private": true,
+  "dependencies": {
+  }
+}

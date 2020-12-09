@@ -13,6 +13,7 @@
     "attend-dependabot": "file:vendor/attend-dependabot",
     "attend-github-labels": "file:vendor/attend-github-labels",
     "attend-hallmark": "file:vendor/attend-hallmark",
+    "attend-local-projects": "file:vendor/attend-local-projects",
     "attend-npm-dependencies": "file:vendor/attend-npm-dependencies",
     "attend-npm-initial-install": "file:vendor/attend-npm-initial-install",
     "attend-npm-repository": "file:vendor/attend-npm-repository",

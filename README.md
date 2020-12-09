@@ -83,6 +83,7 @@ main()
 - projects:
   - [x] `attend-project-clone` (clone github repo by slug)
   - [x] `attend-org-projects` (clone all github repos from org or user)
+  - [x] `attend-local-projects` (run on repositories in a directory)
 - plugins:
   - js:
     - [x] `attend-npm-initial-install` (do npm install after cloning)
