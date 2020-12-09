@@ -12,6 +12,7 @@
     "@octokit/core": "^3.2.1",
     "attend-dependabot": "file:vendor/attend-dependabot",
     "attend-github-labels": "file:vendor/attend-github-labels",
+    "attend-github-repository": "file:vendor/attend-github-repository",
     "attend-hallmark": "file:vendor/attend-hallmark",
     "attend-local-projects": "file:vendor/attend-local-projects",
     "attend-npm-dependencies": "file:vendor/attend-npm-dependencies",

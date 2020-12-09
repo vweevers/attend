@@ -107,6 +107,7 @@ main()
       - if `git fetch` fails: error
       - if `git diff --shortstat <branch> origin/<branch>` has output: not ok
     - [x] `attend-github-labels` (sync labels with a preset)
+    - [x] `attend-github-repository` (create repo)
     - [ ] `attend-github-access`
     - [ ] `attend-github-branch-protection`
     - [ ] `attend-github-stale-issues`

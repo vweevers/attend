@@ -1,0 +1,11 @@
+{
+  "name": "attend-github-repository",
+  "version": "0.0.0",
+  "description": "Attend plugin to create GitHub repository",
+  "private": true,
+  "dependencies": {
+    "@octokit/core": "^3.2.1",
+    "@octokit/plugin-throttling": "^3.3.3",
+    "vfile": "^4.2.0"
+  }
+}
