@@ -77,7 +77,6 @@ class Plugin {
     }
 
     // Treat git as the source of truth
-    // TODO: maybe use project.githost
     const githost = fromGit || fromPkg
 
     if (!githost) {

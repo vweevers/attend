@@ -197,10 +197,7 @@ async function guessDesiredEcosystems (cwd, project) {
     desiredEcosystems.add('gitsubmodule')
   }
 
-  // Reuse info exposed by attend-org-projects
-  if (project.data.languages && project.data.languages.includes('Dockerfile')) {
-    desiredEcosystems.add('docker')
-  } else if (await hasFileShallow(cwd, 'Dockerfile')) {
+  if (await hasFileShallow(cwd, 'Dockerfile')) {
     desiredEcosystems.add('docker')
   }
 

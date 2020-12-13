@@ -1,6 +1,7 @@
 'use strict'
 
 const VProject = require('vproject') // TODO: install
+const Githost = require('git-host') // TODO: install
 const path = require('path')
 const promisify = require('util').promisify
 const execFile = promisify(require('child_process').execFile)
@@ -10,6 +11,7 @@ const fs = require('fs')
 
 const kDepth = Symbol('kDepth')
 const kSparse = Symbol('kSparse')
+const kGithost = Symbol('kGithost')
 
 module.exports = function (pluginOptions) {
   const project = new ProjectClone(pluginOptions)
@@ -29,20 +31,21 @@ class ProjectClone extends VProject {
       throw new TypeError('Options must be an object or string shorthand')
     }
 
-    const githost = VProject.githost(options.githost)
+    const githost = Githost.from(options.githost)
     const depth = options.depth || Infinity
     const sparse = options.sparse
     const cwd = location(depth, sparse, githost)
 
-    super({ ...options, cwd, githost })
+    super({ cwd, data: options.data })
 
     this[kDepth] = depth
     this[kSparse] = sparse
+    this[kGithost] = githost
   }
 
   async open () {
     if (!fs.existsSync(this.cwd)) {
-      const url = this.githost.ssh({ committish: null })
+      const url = this[kGithost].ssh({ committish: null })
       const cloneArgs = this[kDepth] < Infinity ? [`--depth=${this[kDepth]}`] : []
 
       // Requires git >= 2.25

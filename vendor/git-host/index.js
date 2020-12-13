@@ -107,8 +107,9 @@ exports.from = function (value, options) {
   } else {
     const name = 'First argument "value"'
     const obj = 'an object with "url", "cwd" or "pkg"'
+    const actual = JSON.stringify(value)
 
-    throw new TypeError(`${name} must be a string, GitHost or ${obj}`)
+    throw new TypeError(`${name} must be a string, GitHost or ${obj}, got ${actual}`)
   }
 }
 

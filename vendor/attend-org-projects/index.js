@@ -132,15 +132,11 @@ module.exports = function factory (options) {
                 repositories(${q.join(', ')}) {
                   pageInfo { endCursor, hasNextPage }
                   nodes {
-                    defaultBranchRef { name }
                     name
                     nameWithOwner
                     isArchived
                     isEmpty
                     pushedAt
-                    languages(first: 3, orderBy: { field: SIZE, direction: DESC }) {
-                      nodes { name }
-                    }
                     ${gitObjectQueries.join('\n')}
                   }
                 }
@@ -206,13 +202,7 @@ module.exports = function factory (options) {
       function map (repository) {
         return new ProjectClone({
           ...options.clone,
-          githost: {
-            url: `github:${login}/${repository.name}`,
-            defaultBranch: repository.defaultBranchRef.name
-          },
-          data: {
-            languages: repository.languages.nodes.map(lang => lang.name)
-          }
+          githost: `github:${login}/${repository.name}`
         })
       }
     }

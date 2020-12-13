@@ -2,6 +2,7 @@
 
 const vfile = require('vfile')
 const Octokit = require('@octokit/core').Octokit
+const Githost = require('git-host') // TODO: install
 const validBranch = require('is-git-branch-name-valid')
 const promisify = require('util').promisify
 const execFile = promisify(require('child_process').execFile)
@@ -23,19 +24,15 @@ exports.branch = async function (project, name) {
   const current = await currentBranch(cwd)
 
   if (current !== name) {
-    const def = project.githost.defaultBranch || (await defaultBranch(cwd)) || 'main'
+    // TODO: if we have a token, use defaultBranchQuery()
+    const def = await defaultBranch(cwd)
 
     if (name === def) {
       await execFile('git', ['checkout', name], { cwd })
       await execFile('git', ['pull'], { cwd })
     } else {
-      // TODO: skip this if checkout is sparse and repo has submodules
-      try {
-        await execFile('git', ['fetch', '--tags'], { cwd })
-      } catch (err) {
-        console.error(err)
-      }
-
+      // TODO: only add --recurse-submodules=no if checkout is sparse
+      await execFile('git', ['fetch', '--tags', '--recurse-submodules=no'], { cwd })
       await execFile('git', ['checkout', '--no-track', '-b', name, 'origin/' + def], { cwd })
     }
   }
@@ -80,7 +77,7 @@ exports.pr = async function (project, options) {
   }
 
   const { cwd } = project
-  const { type, owner, name, defaultBranch } = project.githost
+  const { type, owner, name } = Githost.fromGit(cwd)
 
   if (type !== 'github') {
     throw new ExpectedError(`Unsupported git host ${JSON.stringify(type)}`)
@@ -89,7 +86,7 @@ exports.pr = async function (project, options) {
   // Base: the name of the branch you want the changes pulled into
   // Head: the name of the branch where your changes are implemented
   const octokit = new Octokit({ auth: token })
-  const base = defaultBranch || (await defaultBranchQuery(octokit, owner, name))
+  const base = await defaultBranchQuery(octokit, owner, name)
   const head = await currentBranch(cwd)
 
   if (!head) {

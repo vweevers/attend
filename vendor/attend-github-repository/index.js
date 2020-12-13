@@ -2,6 +2,7 @@
 
 const Octokit = require('@octokit/core').Octokit
 const throttling = require('@octokit/plugin-throttling').throttling
+const Githost = require('git-host') // TODO: install
 const vfile = require('vfile')
 const path = require('path')
 const fsp = require('fs').promises
@@ -33,7 +34,7 @@ class Plugin {
 
   async _run (project, fix) {
     const cwd = project.cwd
-    const githost = project.githost
+    const githost = Githost.fromDir(cwd)
     const file = vfile({ path: '.', cwd })
     const pkgPath = path.join(cwd, 'package.json')
     const pkg = JSON.parse(await fsp.readFile(pkgPath, 'utf8'))
@@ -44,8 +45,8 @@ class Plugin {
       return { files: [file] }
     }
 
-    const owner = project.githost.owner
-    const name = project.githost.name
+    const owner = githost.owner
+    const name = githost.name
 
     // TODO: take from input?
     let description = pkg.description

@@ -2,6 +2,7 @@
 
 const vfile = require('vfile')
 const jsonMap = require('json-source-map')
+const Githost = require('git-host') // TODO: install
 const resolve = require('resolve')
 const promisify = require('util').promisify
 const execFile = promisify(require('child_process').execFile)
@@ -17,14 +18,15 @@ exports.lint = async function (project) {
   return wrapHallmark(requireHallmark(project.cwd)).lint({
     // TODO: support disabling reporter in hallmark
     report: { _: [function noop () {}] },
-    repository: project.githost.https()
+    // TODO: move to hallmark
+    repository: Githost.fromDir(project.cwd).https()
   })
 }
 
 exports.fix = async function (project) {
   return wrapHallmark(requireHallmark(project.cwd)).fix({
     report: { _: [function noop () {}] },
-    repository: project.githost.https()
+    repository: Githost.fromDir(project.cwd).https()
   })
 }
 

@@ -15,6 +15,7 @@ exports.report = function (suite) {
   const headerSep = chalk.grey(' | ')
   const buffer = []
   const failedProjects = new Set()
+  const nameCache = new Map()
 
   let lastLine = ''
   let lastWrite = 0
@@ -135,10 +136,24 @@ exports.report = function (suite) {
   })
 
   function header (project, ...extra) {
-    const name = project.name || '(anonymous)'
-    const arr = [name, ...extra].filter(Boolean)
+    const arr = [name(project.cwd), ...extra].filter(Boolean)
 
     return arr.length > 0 ? headerPre + arr.join(headerSep) : ''
+  }
+
+  function name (cwd) {
+    let name = nameCache.get(cwd)
+
+    if (name == null) {
+      const dirname = path.dirname(cwd)
+      const parent = dirname !== cwd ? path.basename(dirname) : ''
+      const child = path.basename(cwd)
+
+      name = parent !== '' ? parent + '/' + child : child
+      nameCache.set(cwd, name)
+    }
+
+    return name
   }
 }
 
