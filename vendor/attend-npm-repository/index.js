@@ -61,7 +61,7 @@ class Plugin {
           return result
         }
       } else if (this[kOptions].required === false) {
-        if (fromGit.type === 'github') {
+        if (fromGit.type === 'github' && pkg.name[0] === '@') {
           // For compatibility with GitHub Packages, if repository is not set,
           // then the GitHub repository name must match the package name.
           const name = pkg.name.split('/').pop()
