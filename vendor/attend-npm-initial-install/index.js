@@ -18,6 +18,8 @@ module.exports = function (pluginOptions) {
       return
     }
 
+    const hasLock = fs.existsSync(path.join(cwd, 'package-lock.json'))
+
     await new Promise(function (resolve, reject) {
       const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm'
       const command = pluginOptions.ci ? 'ci' : pluginOptions.it ? 'it' : 'i'
@@ -31,6 +33,7 @@ module.exports = function (pluginOptions) {
         npm_config_progress: 'false',
         npm_config_update_notifier: 'false',
         npm_config_loglevel: 'http',
+        npm_config_package_lock: String(!!hasLock),
         ...pluginOptions.env
       }
 
