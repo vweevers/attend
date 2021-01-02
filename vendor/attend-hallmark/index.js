@@ -2,7 +2,7 @@
 
 const vfile = require('vfile')
 const jsonMap = require('json-source-map')
-const Githost = require('git-host') // TODO: install
+const Githost = require('find-githost')
 const resolve = require('resolve')
 const promisify = require('util').promisify
 const execFile = promisify(require('child_process').execFile)

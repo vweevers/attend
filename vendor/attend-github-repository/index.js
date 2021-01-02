@@ -2,7 +2,7 @@
 
 const Octokit = require('@octokit/core').Octokit
 const throttling = require('@octokit/plugin-throttling').throttling
-const Githost = require('git-host') // TODO: install
+const Githost = require('find-githost')
 const vfile = require('vfile')
 const path = require('path')
 const fsp = require('fs').promises
@@ -40,7 +40,7 @@ class Plugin {
     const pkg = JSON.parse(await fsp.readFile(pkgPath, 'utf8'))
 
     if (githost.type !== 'github') {
-      const rule = 'attend-github-repository:git-host'
+      const rule = 'attend-github-repository:githost'
       file.info(`Skipping git host \`${githost.type}\``, null, rule)
       return { files: [file] }
     }

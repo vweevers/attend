@@ -4,6 +4,7 @@
   "description": "Attend plugin to lint and fix package.json repository field",
   "private": true,
   "dependencies": {
+    "find-githost": "^1.0.0",
     "json-source-map": "0.6.1",
     "vfile": "^4.2.0",
     "vsource": "^1.0.0"

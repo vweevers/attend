@@ -2,7 +2,7 @@
 
 const vfile = require('vfile')
 const githubLabelSync = require('github-label-sync')
-const Githost = require('git-host') // TODO: install
+const Githost = require('find-githost')
 
 module.exports = function (options) {
   if (Array.isArray(options)) {
@@ -31,10 +31,10 @@ module.exports = function (options) {
   async function run (project, fix) {
     const cwd = project.cwd
     const file = vfile({ path: '.', cwd })
-    const githost = Githost.fromGit(cwd)
+    const githost = Githost.fromGit(cwd, { committish: false })
 
     if (githost.type !== 'github') {
-      const rule = 'attend-github-labels:git-host'
+      const rule = 'attend-github-labels:githost'
       file.info(`Skipping git host \`${githost.type}\``, null, rule)
       return { files: [file] }
     }

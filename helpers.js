@@ -2,7 +2,7 @@
 
 const vfile = require('vfile')
 const Octokit = require('@octokit/core').Octokit
-const Githost = require('git-host') // TODO: install
+const Githost = require('find-githost')
 const validBranch = require('is-git-branch-name-valid')
 const promisify = require('util').promisify
 const execFile = promisify(require('child_process').execFile)

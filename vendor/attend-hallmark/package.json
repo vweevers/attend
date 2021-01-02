@@ -4,6 +4,7 @@
   "description": "Attend plugin to lint and fix markdown with hallmark",
   "private": true,
   "dependencies": {
+    "find-githost": "^1.0.0",
     "hallmark": "^3.1.0",
     "json-source-map": "0.6.1",
     "resolve": "^1.19.0",

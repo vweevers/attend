@@ -23,7 +23,7 @@
     "attend-project-clone": "file:vendor/attend-project-clone",
     "attend-reporter": "file:vendor/attend-reporter",
     "attend-standard": "file:vendor/attend-standard",
-    "git-host": "file:vendor/git-host",
+    "find-githost": "^1.0.0",
     "is-git-branch-name-valid": "^1.0.1",
     "vfile": "^4.2.0",
     "vproject": "file:vendor/vproject"

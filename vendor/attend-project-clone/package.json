@@ -4,6 +4,7 @@
   "description": "Attend plugin to run Attend on a repository cloned from GitHub",
   "private": true,
   "dependencies": {
-    "filenamify": "^4.2.0"
+    "filenamify": "^4.2.0",
+    "find-githost": "^1.0.0"
   }
 }

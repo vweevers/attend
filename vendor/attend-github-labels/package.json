@@ -4,6 +4,7 @@
   "description": "Attend plugin to sync GitHub repository labels with a preset",
   "private": true,
   "dependencies": {
+    "find-githost": "^1.0.0",
     "github-label-sync": "^2.0.0",
     "vfile": "^4.2.0"
   },

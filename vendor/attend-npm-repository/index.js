@@ -1,7 +1,7 @@
 'use strict'
 
 const vfile = require('vfile')
-const Githost = require('git-host') // TODO: install
+const Githost = require('find-githost')
 const vsource = require('vsource')
 const jsonMap = require('json-source-map')
 const path = require('path')
@@ -48,8 +48,8 @@ class Plugin {
       return result
     }
 
-    const fromPkg = Githost.fromPkg(pkg, { optional: true })
-    const fromGit = Githost.fromGit(cwd, { optional: true })
+    const fromPkg = Githost.fromPkg(pkg, { optional: true, committish: false })
+    const fromGit = Githost.fromGit(cwd, { optional: true, committish: false })
     const hasRepository = pkg.repository != null
 
     if (!fromPkg) {
@@ -86,7 +86,7 @@ class Plugin {
 
     // Prefer user-provided format, then existing format, then shortest format
     const format = this[kOptions].format || (fromPkg ? fromPkg.format : shortestFormat(githost))
-    const expected = githost.toString({ format, committish: false })
+    const expected = githost.toString({ format })
     const actual = hasRepository && fromPkg ? fromPkg.raw : null
 
     if (actual !== expected) {
