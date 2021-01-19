@@ -1,8 +1,7 @@
 'use strict'
 
 const ProjectClone = require('../attend-project-clone').ProjectClone
-const Octokit = require('@octokit/core').Octokit
-const throttling = require('@octokit/plugin-throttling').throttling
+const simpleOctokit = require('simple-octokit')
 const uniq = require('uniq')
 const path = require('path')
 const fs = require('fs')
@@ -78,12 +77,12 @@ module.exports = function factory (options) {
     throw new ExpectedError('The "limit" option must be a number >= 0 <= Infinity')
   }
 
-  if (!token) {
+  if (typeof token !== 'string' || token === '') {
     const hint = 'required scopes: public_repo or repo'
     throw new ExpectedError(`Please set options.token or GITHUB_TOKEN in the environment (${hint})`)
   }
 
-  const octokit = octo({ auth: token })
+  const octokit = simpleOctokit(token)
   const order = 'orderBy: { field: NAME, direction: ASC }'
   const q = ['first: 100', 'after: $cursor', order]
   const gitObjectQueries = []
@@ -207,22 +206,6 @@ module.exports = function factory (options) {
       }
     }
   }
-}
-
-function octo (options) {
-  const Ctor = Octokit.plugin(throttling)
-
-  return new Ctor({
-    ...options,
-    throttle: {
-      onRateLimit: function (retryAfter, options) {
-        return options.request.retryCount < 5
-      },
-      onAbuseLimit: function (retryAfter, options) {
-        // Nothing to be done
-      }
-    }
-  })
 }
 
 function cmpName (a, b) {

@@ -1,7 +1,6 @@
 'use strict'
 
-const Octokit = require('@octokit/core').Octokit
-const throttling = require('@octokit/plugin-throttling').throttling
+const simpleOctokit = require('simple-octokit')
 const Githost = require('find-githost')
 const vfile = require('vfile')
 const path = require('path')
@@ -15,12 +14,12 @@ class Plugin {
   constructor (options) {
     const token = options.token || process.env.GITHUB_TOKEN
 
-    if (!token) {
+    if (typeof token !== 'string' || token === '') {
       const hint = 'required scopes: admin:org and public_repo or repo'
       throw new ExpectedError(`Please set options.token or GITHUB_TOKEN in the environment (${hint})`)
     }
 
-    this._octokit = octo({ auth: token })
+    this._octokit = simpleOctokit(token)
     this._topicNames = options.topicNames || []
   }
 
@@ -149,22 +148,6 @@ class Plugin {
       file.info('Added topics', null, 'attend-github-repository:topic')
     }
   }
-}
-
-function octo (options) {
-  const Ctor = Octokit.plugin(throttling)
-
-  return new Ctor({
-    ...options,
-    throttle: {
-      onRateLimit: function (retryAfter, options) {
-        return options.request.retryCount < 5
-      },
-      onAbuseLimit: function (retryAfter, options) {
-        // Nothing to be done
-      }
-    }
-  })
 }
 
 class ExpectedError extends Error {
