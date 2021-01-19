@@ -1,0 +1,14 @@
+{
+  "name": "attend-github-pr",
+  "version": "0.0.0",
+  "description": "Attend plugin to create or update a GitHub pull request",
+  "private": true,
+  "dependencies": {
+    "find-githost": "^1.0.0",
+    "simple-octokit": "^1.0.0",
+    "vfile": "^4.2.0"
+  },
+  "engines": {
+    "node": ">=10"
+  }
+}

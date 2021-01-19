@@ -2,7 +2,7 @@
 
 const attend = require('..')
 
-const suite = attend()
+module.exports = attend()
   .use(require('attend-org-projects'), {
     user: 'vweevers',
     org: ['Level', 'airtap', 'prebuild'],
@@ -37,9 +37,3 @@ const suite = attend()
   })
   // TODO: write and add other npm-* plugins here
   .use(require('attend-npm-repository'))
-
-async function main () {
-  await suite.lint()
-}
-
-main()

@@ -9,9 +9,11 @@
     "test": "standard"
   },
   "dependencies": {
-    "@octokit/core": "^3.2.1",
     "attend-dependabot": "file:vendor/attend-dependabot",
+    "attend-git-branch": "file:vendor/attend-git-branch",
+    "attend-git-commit": "file:vendor/attend-git-commit",
     "attend-github-labels": "file:vendor/attend-github-labels",
+    "attend-github-pr": "file:vendor/attend-github-pr",
     "attend-github-repository": "file:vendor/attend-github-repository",
     "attend-hallmark": "file:vendor/attend-hallmark",
     "attend-local-projects": "file:vendor/attend-local-projects",
@@ -23,8 +25,6 @@
     "attend-project-clone": "file:vendor/attend-project-clone",
     "attend-reporter": "file:vendor/attend-reporter",
     "attend-standard": "file:vendor/attend-standard",
-    "find-githost": "^1.0.0",
-    "is-git-branch-name-valid": "^1.0.1",
     "vfile": "^4.2.0",
     "vproject": "file:vendor/vproject"
   },

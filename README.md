@@ -13,7 +13,7 @@
 - Loosely coupled plugins: their input is a directory, output is an array of affected files
 - Run plugins on multiple repositories at once
 - A plugin can export one or more (ideally idempotent) functions:
-  - `init()`: create something from scratch (à la yeoman and npm init)
+  - ~~`init()`: create something from scratch (à la yeoman and npm init)~~
   - `lint()`: find issues
   - `fix()`: fix issues
 - Output is [vfile](https://github.com/vfile/vfile)-based, where every message has an associated source code position
@@ -21,65 +21,56 @@
 
 ## Example
 
-Upgrade `hallmark` in multiple GitHub repositories, fix their markdown, run tests and create a pull request:
+Upgrade `standard` in the working directory (which is the default target if you don't use a project plugin):
 
 ```js
-const attend = require('attend')
+// suite.js
+module.exports = require('attend')
+ .use(require('attend-npm-dependencies'), { only: ['standard'], bump: true })
+ .use(require('attend-standard'))
+ .use(require('attend-npm-test'))
+```
 
-const suite = attend()
- .use(require('attend-project-clone'), 'vweevers/keyspace')
- .use(require('attend-project-clone'), 'Level/abstract-leveldown')
- .use(require('attend-project-clone'), 'Level/compose')
+This exports a "suite" of plugins that you can:
+
+1. Run with `attend-cli`: `attend lint --use suite.js` or `attend fix --use suite.js` (TODO; for now do `node suite.js [lint | fix]`)
+2. Run programmatically: `await suite.lint()` or `await suite.fix()`
+3. Run in GitHub Actions workflows, adding `attend-reporter-github` (TODO) to report lint messages as status check annotations
+4. Use as a preset in another suite: `.use(require('./suite.js'))`
+
+Attend can also run on multiple projects in one go, either by cloning individual GitHub, GitLab or BitBucket repositories (with `attend-project-clone`), by cloning all GitHub repositories of given users and organizations (with `attend-org-projects`) or by scanning a local directory (with `attend-local-projects`).
+
+For example, the following suite clones three repositories, upgrades `hallmark` in their `package.json`, fixes their markdown, runs tests and creates pull requests:
+
+```js
+module.exports = require('attend')
+ .use(require('attend-project-clone'), 'github:vweevers/keyspace')
+ .use(require('attend-project-clone'), 'github:Level/abstract-leveldown')
+ .use(require('attend-project-clone'), 'github:Level/compose')
+ .use(require('attend-git-branch'), 'attend/hallmark-3.1.0')
  .use(require('attend-npm-initial-install'))
  .use(require('attend-npm-dependencies'), { only: ['hallmark'], bump: true })
  .use(require('attend-hallmark'))
  .use(require('attend-npm-test'))
-
-async function main () {
-  // Or await suite.lint()
-  await suite.fix({
-    branch: 'attend/hallmark-3.1.0',
-    commit: 'Bump hallmark to 3.1.0',
-    pr: 'Bump hallmark to 3.1.0'
-  })
-}
-
-main()
+ .use(require('attend-git-commit'), 'Bump hallmark to 3.1.0')
+ .use(require('attend-github-pr'), 'Bump hallmark to 3.1.0')
 ```
 
-Upgrade `standard` in the working directory (the default if you don't use a project plugin):
-
-```js
-const attend = require('attend')
-
-const suite = attend()
- .use(require('attend-npm-dependencies'), { only: ['standard'], bump: true })
- .use(require('attend-standard'))
- .use(require('attend-npm-test'))
-
-async function main () {
-  await suite.fix()
-}
-
-main()
-```
+A suite can be run multiple times if needed, e.g. to make manual fixes or to locally review changes before opening pull requests. Plugins should account for this use case. For example, `attend-git-branch` does nothing if the given branch is already checked out; `attend-npm-dependencies` does nothing if `hallmark` was already upgraded in a previous run; `attend-github-pr` checks if a PR for the current branch already exists and if so it merely does a `git push` (unless there's nothing to push or the PR was merged or closed).
 
 ## Ideas
 
 - features:
-  - [ ] refactor helpers (branch/commit/pr) into plugins
+  - [ ] Export plugin manifests to determine if cloning can be shallow and sparse
   - [ ] `attend-repl-input` (take input for init steps)
-  - [ ] `attend-cli` (wrap plugin in cli)
-  - [ ] run in github actions, (auto-?)convert reports to status check annotations
-  - [ ] allow replacing `attend-reporter`
+  - [ ] Consider using [`git worktree`](https://git-scm.com/docs/git-worktree)
 - helpers:
-  - [x] `branch(name)`
-  - [x] `commit(message)`
+  - [x] `attend-git-branch`
+  - [x] `attend-git-commit`
     - [x] `git add -A` for convenience
     - [x] Do nothing if nothing changed
     - [ ] Amend previous commit if message is the same (and ours)
-  - [x] `pr(title)`
-    - [ ] Add rc for github token
+  - [x] `attend-github-pr`
 - projects:
   - [x] `attend-project-clone` (clone github repo by slug)
   - [x] `attend-org-projects` (clone all github repos from org or user)

@@ -1,0 +1,10 @@
+{
+  "name": "attend-git-commit",
+  "version": "0.0.0",
+  "description": "Attend plugin to stage and commit git changes",
+  "private": true,
+  "dependencies": {},
+  "engines": {
+    "node": ">=10"
+  }
+}

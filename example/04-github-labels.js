@@ -1,9 +1,8 @@
 'use strict'
 
 const attend = require('..')
-const preset = require('github-label-preset')
 
-const suite = attend()
+module.exports = attend()
   // Shallowly clone all repositories of github orgs
   .use(require('attend-org-projects'), {
     org: ['Level', 'airtap', 'prebuild'],
@@ -16,10 +15,6 @@ const suite = attend()
       sparse: true
     }
   })
-  .use(require('attend-github-labels'), { preset })
-
-async function main () {
-  await suite.fix() // Or lint
-}
-
-main()
+  .use(require('attend-github-labels'), {
+    preset: require('github-label-preset')
+  })

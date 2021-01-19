@@ -6,17 +6,40 @@ const VProject = require('vproject')
 const EventEmitter = require('events')
 const path = require('path')
 const fsp = require('fs').promises
-const helpers = require('./helpers')
 
 const kPlugins = Symbol('kPlugins')
 const kRun = Symbol('kRun')
+const kRan = Symbol('kRan')
 const kStep = Symbol('kStep')
 
 class Suite extends EventEmitter {
   constructor () {
     super()
+
     this[kPlugins] = []
-    reporter.report(this)
+    this[kRan] = false
+
+    // TODO: move to new attend-cli module
+    if (module.parent === require.main) {
+      const [, script, command] = process.argv
+
+      process.nextTick(() => {
+        if (this[kRan]) {
+          // Started by user
+        } else if (command === 'lint') {
+          this.lint().catch(error)
+        } else if (command === 'fix') {
+          this.fix().catch(error)
+        } else {
+          error(`Usage: node ${path.relative('.', script)} [lint | fix]`)
+        }
+      })
+
+      function error (err) {
+        console.error(err)
+        process.exit(1)
+      }
+    }
   }
 
   get plugins () {
@@ -38,7 +61,7 @@ class Suite extends EventEmitter {
       }
 
       if (plugin.plugins) {
-        this[kPlugins].push(...plugin.plugins)
+        this.use(plugin.plugins)
       } else {
         this[kPlugins].push(plugin)
       }
@@ -48,16 +71,28 @@ class Suite extends EventEmitter {
   }
 
   async [kRun] (steps) {
+    this[kRan] = true
+
     const original = process.cwd()
     const projects = []
 
     let defaultProject = true
+    let defaultReporter = true
 
     for (const plugin of this[kPlugins]) {
+      if (typeof plugin.report === 'function') {
+        defaultReporter = false
+        plugin.report(this)
+      }
+
       if (typeof plugin.projects === 'function') {
         defaultProject = false
         projects.push(...(await plugin.projects()).map(validateProject))
       }
+    }
+
+    if (defaultReporter) {
+      reporter.report(this)
     }
 
     if (defaultProject) {
@@ -150,11 +185,6 @@ for (const k of ['init', 'lint', 'fix']) {
 
     const steps = []
 
-    if (options.branch) {
-      const work = async (project) => helpers.branch(project, options.branch)
-      steps.push({ name: 'branch', work })
-    }
-
     for (const prefix of ['pre', '', 'post']) {
       const name = prefix + k
 
@@ -165,16 +195,6 @@ for (const k of ['init', 'lint', 'fix']) {
           steps.push({ name, work, plugin })
         }
       }
-    }
-
-    if (options.commit) {
-      const work = async (project) => helpers.commit(project, options.commit)
-      steps.push({ name: 'commit', work })
-    }
-
-    if (options.pr) {
-      const work = async (project) => helpers.pr(project, options.pr)
-      steps.push({ name: 'pr', work })
     }
 
     return this[kRun](steps)

@@ -1,0 +1,12 @@
+{
+  "name": "attend-git-branch",
+  "version": "0.0.0",
+  "description": "Attend plugin to create and checkout a git branch",
+  "private": true,
+  "dependencies": {
+    "is-git-branch-name-valid": "^1.0.1"
+  },
+  "engines": {
+    "node": ">=10"
+  }
+}

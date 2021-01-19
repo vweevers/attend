@@ -2,7 +2,7 @@
 
 const attend = require('..')
 
-const suite = attend()
+module.exports = attend()
   // Shallowly clone all repositories of github user
   .use(require('attend-org-projects'), {
     user: 'vweevers',
@@ -33,6 +33,7 @@ const suite = attend()
       sparse: ['.github', '.github/workflows']
     }
   })
+  .use(require('attend-git-branch'), 'attend/dependabot-2020-11')
   // Collect dependency information for attend-dependabot
   .use(require('attend-npm-dependencies'))
   // Create or update dependabot.yml
@@ -51,16 +52,5 @@ const suite = attend()
       ]
     }
   })
-
-async function main () {
-  // await suite.lint()
-  // return
-
-  await suite.fix({
-    branch: 'attend/dependabot-2020-11'
-    // commit: 'Configure dependabot',
-    // pr: 'Configure dependabot'
-  })
-}
-
-main()
+  // .use(require('attend-git-commit'), 'Configure dependabot')
+  // .use(require('attend-github-pr'), 'Configure dependabot')

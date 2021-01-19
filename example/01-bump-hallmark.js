@@ -2,7 +2,7 @@
 
 const attend = require('..')
 
-const suite = attend()
+module.exports = attend()
   .use(require('attend-project-clone'), 'Level/abstract-leveldown')
   .use(require('attend-project-clone'), 'Level/bench')
   .use(require('attend-project-clone'), 'Level/codec')
@@ -27,20 +27,10 @@ const suite = attend()
   .use(require('attend-project-clone'), 'vweevers/node-docker-machine')
   .use(require('attend-project-clone'), 'vweevers/win-detect-browsers')
   .use(require('attend-project-clone'), 'vweevers/zipfian-integer')
+  .use(require('attend-git-branch'), 'attend/hallmark-3.1.0')
   .use(require('attend-npm-initial-install'))
   .use(require('attend-npm-dependencies'), { only: ['hallmark'], bump: true })
   .use(require('attend-hallmark'))
   .use(require('attend-npm-test'))
-
-async function main () {
-  await suite.lint()
-
-  // Did this, worked :)
-  // await suite.fix({
-  //   branch: 'attend/hallmark-3.1.0',
-  //   commit: 'Bump hallmark to 3.1.0',
-  //   pr: 'Bump hallmark to 3.1.0'
-  // })
-}
-
-main()
+  // .use(require('attend-git-commit'), 'Bump hallmark to 3.1.0')
+  // .use(require('attend-github-pr'), 'Bump hallmark to 3.1.0')
